@@ -59,10 +59,20 @@ run(["ci", "--no-audit", "--no-fund"]);
 run(["exec", "--", "opennextjs-cloudflare", "build"]);
 // Include prerendered routes in ASSETS so direct Wrangler deploys are complete.
 run(["exec", "--", "opennextjs-cloudflare", "populateCache", "local"]);
-if (!existsSync(join(stage, ".open-next", "worker.js"))) throw new Error("Cloudflare worker output is missing.");
+const requiredArtifacts = ["worker.js", ".build/open-next.config.edge.mjs", ".build/open-next.config.mjs"];
+for (const artifact of requiredArtifacts) {
+  if (!existsSync(join(stage, ".open-next", artifact))) {
+    throw new Error(`Cloudflare build artifact is missing: ${artifact}`);
+  }
+}
 const compiledEnv = readFileSync(join(stage, ".open-next", "cloudflare", "next-env.mjs"), "utf8");
 if (compiledEnv.replace(/export const (production|development|test) = \{\};/g, "").trim()) {
   throw new Error("Refusing to publish a Worker containing embedded environment values.");
 }
 cpSync(join(stage, ".open-next"), join(root, ".open-next"), { recursive: true });
+for (const artifact of requiredArtifacts) {
+  if (!existsSync(join(root, ".open-next", artifact))) {
+    throw new Error(`Cloudflare deploy artifact was not transferred: ${artifact}`);
+  }
+}
 console.log("Cloudflare build ready in .open-next/. Configure runtime secrets before deploying.");

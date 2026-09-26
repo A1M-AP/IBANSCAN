@@ -12,14 +12,28 @@ Nel pannello Cloudflare, crea un Worker collegato al repository **A1M-AP/IBANSCA
 | Directory principale | `/` (radice del repository) |
 | Nome Worker | `ibanscan` (uguale a `wrangler.jsonc`) |
 | Versione Node | `22` |
-| Comando build | `npm run cf:build` |
-| Comando deploy | `npx wrangler deploy` |
+| Comando build | Lascia vuoto |
+| Comando deploy | `npm run cf:deploy` |
+
+**Per un Worker già creato:** apri Settings → Build → Build configuration → Edit. Svuota il campo Build command e imposta Deploy command a `npm run cf:deploy`, salva e avvia una nuova build del branch `main`. Il comando esegue sempre la build isolata prima di OpenNext deploy, anche se non sono presenti artefatti in cache. Non eseguire soltanto `next build`: produce la versione Node, senza la configurazione compilata necessaria a OpenNext.
 
 Non serve una directory di output Pages: `wrangler.jsonc` indica il Worker e gli asset. Se cambi il nome del Worker, aggiorna anche il file. Usa i deploy automatici solo per `main`; gli ambienti di anteprima devono avere propri URL e segreti.
 
 Imposta come **variabile di build** `NEXT_PUBLIC_SITE_URL` con l'URL HTTPS pubblico definitivo (ad esempio `https://ibanscan.com`, oppure l'indirizzo Workers assegnato). Questo valore genera canonical, sitemap e metadati: dopo un cambio di dominio serve una nuova build. Opzionale: `NEXT_PUBLIC_CONTACT_EMAIL`.
 
 Non aggiungere chiavi Gemini, token Redis o chiavi clienti alle variabili di build.
+
+## Errore: Could not find compiled Open Next config
+
+OpenNext cerca `.open-next/.build/open-next.config.edge.mjs` nella directory da cui viene eseguito il deploy. Questo errore indica che lì non trova una build OpenNext completa. Può accadere se il comando build è vuoto, esegue soltanto `next build`, o build e deploy usano directory diverse. La configurazione consigliata sopra esegue tutto in un solo comando. La build verifica sia la creazione sia il trasferimento dei file di configurazione compilata.
+
+Per verificare l’intera sequenza senza pubblicare:
+
+```sh
+npm run cf:deploy -- --dry-run --outdir .local/cloudflare-dry-run
+```
+
+La CI esegue lo stesso percorso su Linux. `cf:check` verifica una build già prodotta tramite OpenNext deploy, non soltanto il bundling Wrangler.
 
 ## Avvisi del deploy
 

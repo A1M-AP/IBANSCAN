@@ -107,10 +107,8 @@ jobs:
           cache: npm
       - name: Install locked dependencies
         run: npm ci
-      - name: Build isolated Workers artifact
-        run: npm run cf:build
-      - name: Validate deployable Worker without publishing
-        run: npm run cf:check
+      - name: Build and simulate the complete OpenNext deployment
+        run: npm run cf:deploy -- --dry-run --outdir .local/cloudflare-dry-run
       - name: Install Chromium and system dependencies
         run: npx playwright install --with-deps chromium
       - name: Test in the Workers runtime without production credentials

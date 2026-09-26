@@ -1,7 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { readFile, readdir } from "node:fs/promises";
+import { readFile, readdir, stat } from "node:fs/promises";
 
 test("Workers artifact has no embedded environment files", async () => {
+  for (const artifact of ["worker.js", ".build/open-next.config.edge.mjs", ".build/open-next.config.mjs"]) {
+    expect((await stat(`.open-next/${artifact}`)).size).toBeGreaterThan(0);
+  }
   const compiled = await readFile(".open-next/cloudflare/next-env.mjs", "utf8");
   expect(compiled.replace(/export const (production|development|test) = \{\};/g, "").trim()).toBe("");
   const assets = await readdir(".open-next/assets/cdn-cgi/_next_cache", { recursive: true });

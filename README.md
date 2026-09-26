@@ -86,3 +86,16 @@ See [.env.example](.env.example) and [deployment and operations](docs/deployment
 - `docs/`: source provenance and operational documentation.
 
 Shared-result links carry the IBAN in a URL fragment, require explicit confirmation, and are consumed locally; anyone receiving such a link can read the IBAN. Normal validation and CSV processing do not transmit IBANs. Browser preferences are the color theme in local storage and a one-year, first-party language cookie. See [Google AI, languages and bank profiles](docs/google-ai-and-languages.md).
+
+## Cloudflare Workers
+
+For the complete application on Cloudflare (including Gemini, authenticated API routes and server-rendered languages), use Workers with OpenNext. See [the deployment guide](docs/CLOUDFLARE.md) for GitHub integration, runtime secrets and the exact build/deploy settings.
+
+```sh
+npm run cf:build
+npm run cf:check
+npm run cf:test
+npm run cf:preview
+```
+
+The Cloudflare build is isolated from local `.env` files and does not change the Node/Docker build or local launcher. Never place provider credentials in build-time variables or `NEXT_PUBLIC_*` variables.

@@ -12,3 +12,8 @@ coverage/
 desktop.ini
 *.log
 .DS_Store
+
+.open-next/
+.wrangler/
+.dev.vars
+.dev.vars.*

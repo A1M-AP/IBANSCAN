@@ -11,9 +11,15 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "check": "npm run typecheck && npm run lint && npm test && npm run build"
+    "check": "npm run typecheck && npm run lint && npm test && npm run build",
+    "cf:build": "node scripts/cloudflare-build.mjs",
+    "cf:preview": "wrangler dev --ip 127.0.0.1 --port 8787",
+    "cf:check": "wrangler deploy --dry-run --outdir .local/cloudflare-dry-run",
+    "cf:deploy": "npm run cf:build && wrangler deploy",
+    "cf:test": "node scripts/cloudflare-test.mjs"
   },
   "dependencies": {
+    "@opennextjs/cloudflare": "^1.20.6",
     "lucide-react": "^0.577.0",
     "next": "^16.2.0",
     "react": "^19.2.0",
@@ -26,10 +32,15 @@
     "@types/node": "^24.0.0",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
+    "esbuild": "^0.28.2",
     "eslint": "^9.39.0",
     "eslint-config-next": "^16.2.0",
     "lighthouse": "^13.5.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.18"
+    "vitest": "^4.0.18",
+    "wrangler": "^4.141.0"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

@@ -29,3 +29,10 @@ desktop.ini
 .DS_Store
 Dockerfile*
 docker-compose*.yml
+
+.open-next
+.wrangler
+.dev.vars
+.dev.vars.*
+**/.dev.vars
+**/.dev.vars.*

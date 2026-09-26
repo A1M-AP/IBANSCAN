@@ -1,0 +1,25 @@
+import { expect, test } from "@playwright/test";
+import { readFile, readdir } from "node:fs/promises";
+
+test("Workers artifact has no embedded environment files", async () => {
+  const compiled = await readFile(".open-next/cloudflare/next-env.mjs", "utf8");
+  expect(compiled.replace(/export const (production|development|test) = \{\};/g, "").trim()).toBe("");
+  const assets = await readdir(".open-next/assets/cdn-cgi/_next_cache", { recursive: true });
+  for (const route of ["robots.txt.cache", "sitemap.xml.cache", "opengraph-image.cache"]) {
+    expect(assets.some((file) => file.endsWith(route))).toBe(true);
+  }
+});
+
+test("Workers has static SEO assets and fails closed without runtime secrets", async ({ request, baseURL }) => {
+  const health = await request.get("/api/health");
+  expect(health.ok()).toBe(true);
+  expect(await health.json()).toMatchObject({ validation: "available", ai: "unconfigured", api: "unconfigured", requestProtection: "unconfigured" });
+  expect(health.headers()["cache-control"]).toContain("no-store");
+  const og = await request.get("/opengraph-image");
+  expect(og.status()).toBe(200);
+  expect(og.headers()["content-type"]).toBe("image/png");
+  const denied = await request.post("/api/ai", { headers: { Origin: "https://invalid.example" }, data: {} });
+  expect(denied.status()).toBe(403);
+  const unconfigured = await request.post("/api/ai", { headers: { Origin: baseURL! }, data: {} });
+  expect(unconfigured.status()).toBe(503);
+});

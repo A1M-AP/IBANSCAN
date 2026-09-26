@@ -1,0 +1,89 @@
+name: Quality and deployment checks
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Test, build, and container smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Generate route types for a fresh checkout
+        run: npx next typegen
+      - name: Type check
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Unit, API, and security tests
+        run: npm test
+      - name: Production build
+        run: npm run build
+      - name: Install Chromium and system dependencies
+        run: npx playwright install --with-deps chromium
+      - name: Browser, responsive, privacy, and accessibility tests
+        run: npm run test:e2e
+      - name: Build the deployment image
+        run: docker build --tag ibanscan:ci .
+      - name: Smoke test the non-root production container
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --detach --name ibanscan-ci --publish 127.0.0.1:3001:3000 ibanscan:ci
+          trap 'docker logs ibanscan-ci; docker rm --force ibanscan-ci' EXIT
+          for attempt in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:3001/api/health >/dev/null; then
+              break
+            fi
+            sleep 2
+          done
+          test "$(docker inspect --format '{{.Config.User}}' ibanscan-ci)" = "node"
+          node --input-type=module <<'NODE'
+          const base = 'http://127.0.0.1:3001';
+          const health = await fetch(base + '/api/health');
+          if (!health.ok || (await health.json()).status !== 'ok') throw new Error('Health check failed');
+          const home = await fetch(base);
+          const html = await home.text();
+          if (!home.ok || !html.includes('IBANScan')) throw new Error('Homepage failed');
+          const script = html.match(/src="([^"\s]*\/_next\/static\/[^"\s]+\.js(?:\?[^"\s]*)?)"/)?.[1];
+          if (!script || !(await fetch(new URL(script, base))).ok) throw new Error('Standalone static assets are missing');
+          const api = await fetch(base + '/api/v1/iban/validate', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ iban: 'IT60X0542811101000000123456' }),
+          });
+          if (api.status !== 503) throw new Error('Unconfigured API must fail closed');
+          NODE
+      - name: Save browser reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: browser-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+

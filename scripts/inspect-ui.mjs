@@ -1,0 +1,15 @@
+import { chromium } from "@playwright/test";
+const browser = await chromium.launch();
+const page = await browser.newPage();
+page.on("console", message => { if (message.type() === "error") console.log("BROWSER ERROR", message.text().slice(0, 800)); });
+page.on("pageerror", error => console.log("PAGE ERROR", error.message));
+page.on("requestfailed", request => console.log("FAILED", request.url(), request.failure()?.errorText));
+const response = await page.goto(process.env.PLAYWRIGHT_BASE_URL || "http://127.0.0.1:3000");
+console.log("STATUS", response.status(), "CSP", response.headers()["content-security-policy"]);
+await page.waitForTimeout(1500);
+await page.getByRole("button", {name:/Italy/}).click();
+console.log("EXAMPLE INPUT", await page.getByLabel("Enter an IBAN", { exact: true }).inputValue());
+await page.getByRole("button", {name:"Scan IBAN",exact:true}).click();
+await page.waitForTimeout(500);
+console.log("VALID RESULT", await page.getByRole("heading", {name:"Valid IBAN structure",exact:true}).count());
+await browser.close();

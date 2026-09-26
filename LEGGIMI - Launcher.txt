@@ -1,0 +1,21 @@
+IBANScan - Prova il sito sul tuo computer
+
+1. Fai doppio clic su "Avvia IBANScan.cmd".
+2. Attendi la preparazione iniziale. Il browser si apre automaticamente.
+3. Per arrestare il sito, fai doppio clic su "Ferma IBANScan.cmd".
+
+Il launcher usa una versione di produzione e tiene il server in background.
+Il sito e accessibile solo dal tuo computer, normalmente su http://127.0.0.1:3000/.
+Se la porta e occupata, ne viene scelta automaticamente una libera.
+La finestra di avvio si chiude da sola quando il sito e pronto.
+
+Il primo avvio prepara il sito. Gli avvii successivi riutilizzano la build.
+Per provare modifiche al codice, arresta e riavvia: la build viene aggiornata.
+I log si trovano nella cartella .local, file preview.log.
+
+Node.js 22 o successivo e richiesto (gia disponibile su questo computer).
+Se le dipendenze mancano, il primo avvio le scarica tramite npm.
+
+Validazione IBAN e strumenti CSV funzionano senza credenziali.
+AI e API richiedono la configurazione descritta in .env.example e README.md.
+Il launcher non pubblica il sito online e non avvia pagamenti o pubblicita.

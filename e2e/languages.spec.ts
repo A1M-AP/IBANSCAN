@@ -53,7 +53,7 @@ test("all five languages fit mobile and desktop with a neutral accessible theme"
   const ui=getUi("it");
   await page.getByRole("button",{name:ui.nav.theme}).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme","dark");
-  expect(await page.evaluate(()=>getComputedStyle(document.body).backgroundColor)).toBe("rgb(17, 17, 19)");
+  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(17, 17, 19)");
   const audit=await new AxeBuilder({page}).withTags(["wcag2a","wcag2aa","wcag21aa"]).analyze();
   expect(audit.violations).toEqual([]);
   await page.screenshot({path:info.outputPath("italian-dark-desktop.png"),fullPage:false});

@@ -5,17 +5,16 @@
   "preview_urls": true,
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-09-26",
-  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "compatibility_flags": [
+    "nodejs_compat",
+    "global_fetch_strictly_public"
+  ],
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
-  "observability": { "enabled": false },
-  "vars": {
-    "AI_PROVIDER": "google",
-    "GOOGLE_AI_MODEL": "gemini-3.5-flash-lite",
-    "AI_GLOBAL_DAILY_LIMIT": "200",
-    "RATE_LIMIT_ALLOW_SINGLE_INSTANCE": "false",
-    "TRUSTED_IP_HEADER": "cf-connecting-ip"
-  }
+  "observability": {
+    "enabled": false
+  },
+  "vars": {}
 }

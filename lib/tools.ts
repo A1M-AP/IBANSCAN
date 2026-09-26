@@ -1,4 +1,4 @@
-export type ToolKind = "scanner" | "formatter" | "generator" | "country" | "bank" | "bulk";
+export type ToolKind = "scanner" | "formatter" | "generator" | "country" | "bank" | "bulk" | "calculator" | "rates" | "converter" | "currencies";
 export const toolCatalog: { slug: string; name: string; description: string; detail: string; group: string; icon: string; kind: ToolKind }[] = [
   { slug: "iban-validator", name: "IBAN Validator", description: "A quick, thorough check of any IBAN.", detail: "Check country format, length and international check digits, privately in your browser.", group: "IBAN tools", icon: "scan", kind: "scanner" },
   { slug: "iban-analyzer", name: "IBAN Analyzer", description: "Understand every part of an IBAN.", detail: "Break an IBAN into its country, check digits and domestic identifiers, with sourced bank data where available.", group: "IBAN tools", icon: "layers", kind: "scanner" },
@@ -11,5 +11,9 @@ export const toolCatalog: { slug: string; name: string; description: string; det
   { slug: "sepa-checker", name: "SEPA Checker", description: "Check a country’s SEPA coverage.", detail: "Check whether an IBAN’s country is within SEPA’s geographical scope. Bank participation requires a separate check.", group: "Banking tools", icon: "globe", kind: "scanner" },
   { slug: "bulk-iban-validator", name: "Bulk IBAN Validator", description: "Check a whole list in one go.", detail: "Validate up to 100 IBANs at a time on your device and export a clear, spreadsheet-ready report.", group: "Business tools", icon: "list", kind: "bulk" },
   { slug: "csv-iban-validator", name: "CSV IBAN Validator", description: "Turn a spreadsheet into clear results.", detail: "Open a CSV locally, validate its IBAN column and download your results. Your file is never uploaded.", group: "Business tools", icon: "file", kind: "bulk" },
+  {slug:'iban-calculator',name:'Calculate IBAN',description:'Calculate an IBAN from domestic account details.',detail:'Calculate an Italian IBAN from ABI, CAB and account number, or a known BBAN for other countries.',group:'IBAN tools',icon:'code',kind:'calculator'},
+  {slug:'exchange-rates',name:'Exchange rates',description:'ECB reference rates with a clear publication date.',detail:'Explore European Central Bank reference exchange rates.',group:'Currency tools',icon:'globe',kind:'rates'},
+  {slug:'currency-converter',name:'Currency converter',description:'Convert amounts using ECB reference rates.',detail:'Convert between currencies using European Central Bank reference rates.',group:'Currency tools',icon:'globe',kind:'converter'},
+  {slug:'currency-codes',name:'Currency codes',description:'Browse the official ISO 4217 currency list.',detail:'Find alphabetic and numeric currency codes and decimal places.',group:'Currency tools',icon:'list',kind:'currencies'},
 ];
 export const getTool = (slug: string) => toolCatalog.find((tool) => tool.slug === slug);

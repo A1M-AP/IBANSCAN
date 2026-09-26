@@ -1,4 +1,3 @@
-import { handleIban } from "@/lib/server/api-handlers";
-export const runtime = "nodejs";
-export async function POST(request: Request) { return handleIban(request, "analyze"); }
-
+function retired(){return Response.json({error:'This service has been retired.'},{status:410,headers:{'Cache-Control':'no-store'}})}
+export const GET=retired;
+export const POST=retired;

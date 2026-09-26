@@ -34,7 +34,7 @@ const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => all
 env.NEXT_TELEMETRY_DISABLED = "1";
 env.WRANGLER_SEND_METRICS = "false";
 env.NEXT_PUBLIC_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ibanscan.com";
-if (process.env.NEXT_PUBLIC_CONTACT_EMAIL) env.NEXT_PUBLIC_CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL;
+for (const name of ['NEXT_PUBLIC_CONTACT_EMAIL','NEXT_PUBLIC_ADSENSE_CLIENT','NEXT_PUBLIC_ADSENSE_HOME_SLOT','NEXT_PUBLIC_ADSENSE_TOOL_SLOT','NEXT_PUBLIC_ADSENSE_RESOURCE_SLOT','NEXT_PUBLIC_GOOGLE_CMP_URL']) if(process.env[name])env[name]=process.env[name];
 
 const npmCli = process.env.npm_execpath;
 if (!npmCli || !existsSync(npmCli)) throw new Error("Run this script using npm run cf:build.");
@@ -75,4 +75,4 @@ for (const artifact of requiredArtifacts) {
     throw new Error(`Cloudflare deploy artifact was not transferred: ${artifact}`);
   }
 }
-console.log("Cloudflare build ready in .open-next/. Configure runtime secrets before deploying.");
+console.log("Cloudflare build ready in .open-next/. Ready for Workers deployment.");

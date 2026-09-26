@@ -1,11 +1,50 @@
+import { GoogleAd } from "./google-ad";
 import type { ReactNode } from "react";
-import { getServerUi } from "@/lib/i18n-server";
+import { getLocale } from "@/lib/i18n-server";
+import { googleCmpUrl } from "@/lib/advertising";
+import { productCopy } from "@/locales/product";
 export type AdPlacement = "home" | "tool" | "result" | "resource";
 export type AdProvider = { render: (placement: AdPlacement) => ReactNode };
-// No ad provider or third-party tracking is enabled in the first release.
-// Future providers must integrate consent and update the strict CSP before use.
-export async function AdSlot({ placement, provider, adFree = false }: { placement: AdPlacement; provider?: AdProvider; adFree?: boolean }) {
-  const ui = await getServerUi();
-  if (!provider || adFree) return null;
-  return <aside className="ad-slot" aria-label={ui.shell.advertisement}><span>{ui.shell.advertisement}</span>{provider.render(placement)}</aside>;
+/** Reserved inventory is visible; no ad network loads without an integrated consent provider. */
+export async function AdSlot({
+  placement,
+  provider,
+  adFree = false,
+}: {
+  placement: AdPlacement;
+  provider?: AdProvider;
+  adFree?: boolean;
+}) {
+  if (adFree) return null;
+  const t = productCopy[await getLocale()];
+  const client = process.env.NEXT_PUBLIC_ADSENSE_CLIENT || "";
+  const slots = {
+    home: process.env.NEXT_PUBLIC_ADSENSE_HOME_SLOT,
+    tool: process.env.NEXT_PUBLIC_ADSENSE_TOOL_SLOT,
+    result: process.env.NEXT_PUBLIC_ADSENSE_TOOL_SLOT,
+    resource: process.env.NEXT_PUBLIC_ADSENSE_RESOURCE_SLOT,
+  };
+  const slot = slots[placement] || "";
+  const placeholder = (
+    <div className="ad-reserved">
+      <span>{t.adSpace}</span>
+      <small>{t.adNote}</small>
+    </div>
+  );
+  const configured =
+    /^ca-pub-\d{16}$/.test(client) &&
+    /^\d{6,20}$/.test(slot) &&
+    googleCmpUrl(process.env.NEXT_PUBLIC_GOOGLE_CMP_URL);
+  return (
+    <aside className="ad-slot" data-placement={placement} aria-label={t.ad}>
+      <span className="ad-label">{t.ad}</span>
+      {provider ? (
+        provider.render(placement)
+      ) : configured ? (
+        <GoogleAd client={client} slot={slot} placeholder={placeholder} />
+      ) : (
+        placeholder
+      )}
+    </aside>
+  );
 }

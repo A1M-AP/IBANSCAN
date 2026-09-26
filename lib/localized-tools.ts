@@ -1,3 +1,4 @@
+import { productCopy } from "@/locales/product";
 import { toolCatalog } from "./tools";
 import type { Locale } from "./i18n";
 
@@ -57,11 +58,13 @@ const translations: Record<Exclude<Locale, "en">, [string, string][]> = {
 };
 
 export function getLocalizedTools(locale: Locale) {
-  if (locale === "en") return toolCatalog;
-  return toolCatalog.map((tool, index) => ({ ...tool, name: translations[locale][index][0], description: translations[locale][index][1], detail: translations[locale][index][1] }));
+  const t=productCopy[locale];
+ const extra:Record<string,[string,string]>={"iban-calculator":[t.calculate,t.calculateText],"exchange-rates":[t.rates,t.ratesText],"currency-converter":[t.converter,t.converterText],"currency-codes":[t.codes,t.codesText]};
+  return toolCatalog.map((tool,index)=>{const copy=extra[tool.slug]||(locale!=="en"?translations[locale][index]:null);return copy?{...tool,name:copy[0],description:copy[1],detail:copy[1]}:tool;});
 }
 
 export function toolGroupName(group: string, locale: Locale) {
+  if(group==="Currency tools")return productCopy[locale].currencyGroup;
   const groups = { en: ["IBAN tools", "Banking tools", "Business tools"], it: ["Strumenti IBAN", "Strumenti bancari", "Strumenti aziendali"], de: ["IBAN-Werkzeuge", "Bankwerkzeuge", "Unternehmenswerkzeuge"], es: ["Herramientas IBAN", "Herramientas bancarias", "Herramientas empresariales"], fr: ["Outils IBAN", "Outils bancaires", "Outils professionnels"] };
   return groups[locale][groups.en.indexOf(group)] ?? group;
 }

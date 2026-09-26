@@ -1,3 +1,4 @@
+import { AdSlot } from "@/components/ad-slot";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -32,6 +33,6 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
       <section className="source-notes"><h2>{t.resources.sources}</h2><ul>{guide.sources.map((source) => <li key={source.url}><a href={source.url} target="_blank" rel="noopener noreferrer">{source.label}</a></li>)}</ul><p className="muted">{t.common.updated}</p></section>
       <section className="card content-callout"><h2>{c.practice}</h2><p>{t.resources.disclaimer}</p><Link className="button primary" href={guide.tool.href}>{guide.tool.label}</Link></section>
       <section><h2>{t.resources.further}</h2><ul>{translatedGuides.filter((item) => item.slug !== guide.slug).slice(0, 3).map((item) => <li key={item.slug}><Link href={`/resources/${item.slug}`}>{item.title}</Link></li>)}</ul></section>
-    </article>
+    </article><AdSlot placement="resource"/>
   </div>;
 }

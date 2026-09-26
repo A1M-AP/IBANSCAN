@@ -46,7 +46,7 @@ async function accessible(page: Page) {
 
 test("homepage example, validation errors, reset and private browser processing", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1, name: /Scan\. Verify\./ })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: /Your money tools/ })).toBeVisible();
   const requests: { url: string; body: string }[] = [];
   page.on("request", (request) => requests.push({ url: request.url(), body: request.postData() || "" }));
   await page.getByRole("button", { name: /Italy/ }).click();
@@ -86,25 +86,7 @@ test("a shared fragment is consumed locally and requires explicit share action",
   await expect(dialog).not.toBeVisible();
 });
 
-test("AI requires consent and shows a provider-unavailable response without inventing an answer", async ({ page }) => {
-  let calls = 0;
-  await page.route("**/api/ai", async (route) => {
-    calls++;
-    expect(route.request().method()).toBe("POST");
-    expect(route.request().postDataJSON()).toEqual({ iban: italian, question: "Explain this result", locale: "en" });
-    await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "IBANScan AI is not configured yet. Your IBAN analysis is still available." }) });
-  });
-  await page.goto("/");
-  await scan(page);
-  await page.getByRole("button", { name: "Ask AI", exact: true }).click();
-  await expect(page.getByRole("main").getByRole("alert")).toContainText("Please agree to the data processing");
-  expect(calls).toBe(0);
-  await page.getByRole("checkbox", { name: /Send this IBAN to our server/ }).check();
-  await page.getByRole("button", { name: "Ask AI", exact: true }).click();
-  await expect(page.getByRole("main").getByRole("alert")).toContainText("AI is not configured yet");
-  expect(calls).toBe(1);
-  await expect(page.getByRole("heading", { name: validHeading, exact: true })).toBeVisible();
-});
+test("retired features are absent and cannot contact providers",async({page,request})=>{await page.goto('/');await scan(page);await expect(page.locator('.ai-assistant')).toHaveCount(0);await expect(page.locator('header a[href="/api"],header a[href="/ai"]')).toHaveCount(0);expect((await request.post('/api/ai',{data:{}})).status()).toBe(410);await page.goto('/ai');await expect(page).toHaveURL(/\/tools$/)});
 
 test("theme preference persists and both themes pass accessible contrast checks", async ({ page }, info) => {
   await page.goto("/");
@@ -201,7 +183,7 @@ test("CSV upload handles a real file locally", async ({ page }) => {
 });
 
 test("country and guide pages expose useful content and canonical metadata", async ({ page }) => {
-  for (const path of ["/countries", "/countries/italy", "/iban/germany", "/resources", "/resources/what-is-an-iban", "/api/docs", "/api/playground"]) {
+  for (const path of ["/countries", "/countries/italy", "/iban/germany", "/resources", "/resources/what-is-an-iban", "/data-sources", "/tools/currency-codes"]) {
     const response = await page.goto(path);
     expect(response?.status(), path).toBe(200);
     await expect(page.getByRole("heading", { level: 1 }), path).toBeVisible();
@@ -213,12 +195,12 @@ test("country and guide pages expose useful content and canonical metadata", asy
 test("public API fails closed without valid credentials", async ({ request }) => {
   for (const endpoint of ["validate", "analyze"]) {
     const response = await request.post("/api/v1/iban/" + endpoint, { data: { iban: italian } });
-    expect([401, 503]).toContain(response.status());
+    expect(response.status()).toBe(410);
     expect(await response.text()).not.toContain(italian);
     expect(response.headers()["cache-control"]).toContain("no-store");
   }
   const search = await request.get("/api/v1/bank/search?q=ABNA");
-  expect([401, 503]).toContain(search.status());
+  expect(search.status()).toBe(410);
 });
 
 test("SEO endpoints list public tools and security headers protect the site", async ({ request }) => {

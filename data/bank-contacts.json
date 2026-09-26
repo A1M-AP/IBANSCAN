@@ -1,0 +1,37 @@
+[
+  {
+    "bankIdentifier": "02008",
+    "email": "reclami@pec.unicredit.eu",
+    "source": "https://www.unicredit.it/it/info/reclami-ricorsi-e-conciliazione.html",
+    "purpose": "complaints",
+    "verifiedAt": "2026-09-26"
+  },
+  {
+    "bankIdentifier": "03069",
+    "email": "reclami@pec.intesasanpaolo.com",
+    "source": "https://www.intesasanpaolo.com/it/persone-e-famiglie/reclami.html",
+    "purpose": "complaints",
+    "verifiedAt": "2026-09-26"
+  },
+  {
+    "bankIdentifier": "05387",
+    "email": "reclami.bper@pec.gruppobper.it",
+    "source": "https://www.bper.it/faq/carte",
+    "purpose": "complaints",
+    "verifiedAt": "2026-09-26"
+  },
+  {
+    "bankIdentifier": "05034",
+    "email": "reclami@pec.bancobpmspa.it",
+    "source": "https://gruppo.bancobpm.it/reclami/",
+    "purpose": "complaints",
+    "verifiedAt": "2026-09-26"
+  },
+  {
+    "bankIdentifier": "03015",
+    "email": "finecobankspa.pec@pec.finecobank.com",
+    "source": "https://images.finecobank.com/docs/pdf/pub/popup/reclami-ricorsi-conciliazione/rendiconto-reclami-trasparenza-2025.pdf",
+    "purpose": "complaints",
+    "verifiedAt": "2026-09-26"
+  }
+]

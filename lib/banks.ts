@@ -137,6 +137,7 @@ export const bankRecords: readonly BankRecord[] = [
       verifiedAt: "2026-09-22",
     },
   },
+ {name:'UniCredit S.p.A.',bic:'UNCRITMMXXX',countryCode:'IT',bankIdentifier:'02008',source:'https://www.unicreditgroup.eu/it/info/general-company-info.html',additionalSources:['https://circolofirenze.unicredit.it/diventa-socio'],verifiedAt:'2026-09-26',website:'https://www.unicredit.it/',contact:{url:'https://www.unicredit.it/it/info/contatti.html',source:'https://www.unicredit.it/it/info/contatti.html',verifiedAt:'2026-09-26'},office:{address:'Piazza Gae Aulenti 3, Tower A, 20154 Milano, Italia',kind:'registered-office',source:'https://www.unicreditgroup.eu/it/info/general-company-info.html',verifiedAt:'2026-09-26'}},
 ];
 
 function isObject(value: unknown): value is Record<string, unknown> {

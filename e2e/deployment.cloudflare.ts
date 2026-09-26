@@ -13,16 +13,16 @@ test("Workers artifact has no embedded environment files", async () => {
   }
 });
 
-test("Workers has static SEO assets and fails closed without runtime secrets", async ({ request, baseURL }) => {
+test("Workers has static SEO assets and fails closed without runtime secrets", async ({ request }) => {
   const health = await request.get("/api/health");
   expect(health.ok()).toBe(true);
-  expect(await health.json()).toMatchObject({ validation: "available", ai: "unconfigured", api: "unconfigured", requestProtection: "unconfigured" });
+  expect(await health.json()).toMatchObject({ validation: "available", bankDirectory: "available" });
   expect(health.headers()["cache-control"]).toContain("no-store");
   const og = await request.get("/opengraph-image");
   expect(og.status()).toBe(200);
   expect(og.headers()["content-type"]).toBe("image/png");
   const denied = await request.post("/api/ai", { headers: { Origin: "https://invalid.example" }, data: {} });
-  expect(denied.status()).toBe(403);
-  const unconfigured = await request.post("/api/ai", { headers: { Origin: baseURL! }, data: {} });
-  expect(unconfigured.status()).toBe(503);
+  expect(denied.status()).toBe(410);
+  const unconfigured = await request.post("/api/ai", { headers: { Origin: "https://ibanscan.test" }, data: {} });
+  expect(unconfigured.status()).toBe(410);
 });

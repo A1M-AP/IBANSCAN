@@ -74,7 +74,7 @@ jobs:
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ iban: 'IT60X0542811101000000123456' }),
           });
-          if (api.status !== 503) throw new Error('Unconfigured API must fail closed');
+          if (api.status !== 410) throw new Error('Retired API must be unavailable');
           NODE
       - name: Save browser reports
         if: always()

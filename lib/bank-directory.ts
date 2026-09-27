@@ -63,6 +63,7 @@ export function directoryLookup(
         source: r.source,
         verifiedAt: r.verifiedAt,
       };
+      if (!bank.bic && participant) bank.bic = participant.bic;
       if (!bank.office && raw.legalAddress)
         bank.office = {
           address: raw.legalAddress,

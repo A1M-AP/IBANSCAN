@@ -86,6 +86,7 @@ def italian():
         if key in seen and seen[key]!=record:raise ValueError('Conflicting ABI records; manual review required: '+key)
         seen[key]=record
     save('italian-banks.json',{'source':base,'retrievedAt':TODAY,'records':records})
+    save('italian-bank-names.json',{'source':base,'retrievedAt':TODAY,'names':{r['bankIdentifier']:r['name'] for r in records}})
     print('Italian banks',len(records),'PEC',sum(bool(r.get('pec')) for r in records),flush=True)
 def branches():
     base='https://infostat.bancaditalia.it/GIAVAInquiry-public/ng/'

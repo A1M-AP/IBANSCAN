@@ -107,7 +107,7 @@ export default async function Home() {
                 href={"/tools/" + tool.slug}
                 key={tool.slug}
               >
-                <ToolVisual kind={tool.kind} />
+                <ToolVisual slug={tool.slug} />
                 <div className="premium-tool-copy">
                   <h3>
                     {tool.name}

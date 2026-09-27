@@ -1,3 +1,4 @@
+import italianNames from "@/data/italian-bank-names.json";
 import { isBicFormat } from "./bic";
 
 export type BankContact = {
@@ -240,7 +241,10 @@ export function createBankDataProvider(records: readonly BankRecord[], name = "v
 
 export const bankDataProvider = createBankDataProvider(bankRecords);
 export function lookupBank(countryCode: string, bankIdentifier: string): BankRecord | null {
-  return bankDataProvider.lookup(countryCode, bankIdentifier);
+  const known = bankDataProvider.lookup(countryCode, bankIdentifier);
+  if (known) return known;
+  const name = countryCode.toUpperCase() === "IT" ? (italianNames.names as Record<string,string>)[bankIdentifier] : undefined;
+  return name ? { name, bic: "", countryCode: "IT", bankIdentifier, source: italianNames.source, verifiedAt: italianNames.retrievedAt } : null;
 }
 export function searchBanks(query: string, countryCode?: string): BankRecord[] {
   return bankDataProvider.search(query, countryCode);

@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import type { DirectoryBank } from "@/lib/bank-directory-types";
+import Link from "next/link";
+import { bankLookupCopy } from "@/locales/bank-lookup";
 import { BankProfile } from "./bank-profile";
 import { localizeResult } from "@/lib/iban-display";
 import { type IbanResult } from "@/lib/iban";
@@ -12,8 +14,12 @@ import { useUi, useLocale } from "./locale-provider";
 export function ScanResult({ result: originalResult }: { result: IbanResult }) {
   const ui = useUi();
   const { locale } = useLocale();
+  const copy = bankLookupCopy[locale];
+  const [attempt, setAttempt] = useState(0);
   const [resolved, setResolved] = useState<{
     key: string;
+    attempt: number;
+    error: boolean;
     bank: DirectoryBank | null;
   } | null>(null);
   const bankKey = originalResult.valid
@@ -26,6 +32,8 @@ export function ScanResult({ result: originalResult }: { result: IbanResult }) {
   useEffect(() => {
     if (!bankKey || !originalResult.bankIdentifier) return;
     const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    let active = true;
     const p = new URLSearchParams({
       country: originalResult.country!.code,
       code: originalResult.bankIdentifier,
@@ -37,10 +45,27 @@ export function ScanResult({ result: originalResult }: { result: IbanResult }) {
         if (!r.ok) throw Error();
         return r.json();
       })
-      .then((data) => setResolved({ key: bankKey, bank: data.bank }))
-      .catch(() => {});
-    return () => controller.abort();
+      .then((data) => {
+        if (
+          !Object.hasOwn(data, "bank") ||
+          (data.bank !== null && typeof data.bank?.name !== "string")
+        )
+          throw Error("Invalid directory response");
+        if (active)
+          setResolved({ key: bankKey, bank: data.bank, error: false, attempt });
+      })
+      .catch(() => {
+        if (active)
+          setResolved({ key: bankKey, bank: null, error: true, attempt });
+      })
+      .finally(() => clearTimeout(timeout));
+    return () => {
+      active = false;
+      clearTimeout(timeout);
+      controller.abort();
+    };
   }, [
+    attempt,
     bankKey,
     originalResult.bankIdentifier,
     originalResult.branchIdentifier,
@@ -48,8 +73,26 @@ export function ScanResult({ result: originalResult }: { result: IbanResult }) {
   ]);
   const result = {
     ...localizeResult(originalResult, locale),
-    bank: resolved?.key === bankKey ? resolved.bank : originalResult.bank,
+    bank:
+      resolved?.key === bankKey
+        ? resolved.bank || originalResult.bank
+        : originalResult.bank,
   };
+  const lookupPending =
+    !!bankKey &&
+    !!originalResult.bankIdentifier &&
+    (resolved?.key !== bankKey || resolved?.attempt !== attempt);
+  const lookupFailed =
+    !lookupPending && resolved?.key === bankKey && resolved.error;
+  const lookupMessage = !originalResult.valid
+    ? copy.invalid
+    : lookupPending
+      ? copy.loading
+      : lookupFailed
+        ? copy.error
+        : !result.bank
+          ? copy.missing
+          : "";
   const dialog = useRef<HTMLDialogElement>(null);
   const [shareStatus, setShareStatus] = useState("");
   const fields = [
@@ -135,7 +178,14 @@ export function ScanResult({ result: originalResult }: { result: IbanResult }) {
           </div>
           <div>
             <span>{ui.scanner.bank}</span>
-            <strong>{result.bank?.name || ui.scanner.unavailable}</strong>
+            <strong>
+              {result.bank?.name ||
+                (lookupPending
+                  ? copy.loading
+                  : lookupFailed
+                    ? ui.scanner.notAvailable
+                    : ui.scanner.unavailable)}
+            </strong>
           </div>
           <div>
             <span>{ui.scanner.bic}</span>
@@ -181,7 +231,36 @@ export function ScanResult({ result: originalResult }: { result: IbanResult }) {
             <Icon name="building" />
             {ui.scanner.bankInfo}
           </h3>
-          <BankProfile bank={result.bank} />
+          {lookupMessage && (
+            <div
+              className="bank-lookup-status"
+              role="status"
+              aria-live="polite"
+            >
+              <p>{lookupMessage}</p>
+              {lookupFailed && (
+                <button
+                  type="button"
+                  className="button button-small"
+                  onClick={() => setAttempt((value) => value + 1)}
+                >
+                  {copy.retry}
+                </button>
+              )}
+              {!lookupPending && originalResult.valid && !result.bank && (
+                <>
+                  <p className="mono">
+                    {originalResult.country?.code} ·{" "}
+                    {originalResult.bankIdentifier || "—"}
+                  </p>
+                  <Link className="text-link" href="/data-sources">
+                    {copy.coverage} →
+                  </Link>
+                </>
+              )}
+            </div>
+          )}
+          {result.bank && <BankProfile bank={result.bank} />}
           <dl className="detail-list">
             {fields.map(([label, value]) => (
               <div key={label}>

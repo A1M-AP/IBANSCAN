@@ -190,7 +190,7 @@ code {
   overflow: hidden;
   z-index: -1;
   pointer-events: none;
-  opacity: 0.6;
+  opacity: 0.9;
 }
 .abstract-background div {
   position: absolute;
@@ -200,14 +200,14 @@ code {
   border: 1px solid #b9b9c13d;
   background: linear-gradient(135deg, #bfbfc022, transparent 55%);
   transform: rotate(-32deg);
-  right: -560px;
+  right: -410px;
   top: -80px;
   box-shadow: inset 15px 15px 60px #bcbcc111;
-  animation: ambient-drift 18s ease-in-out infinite alternate;
+  animation: ambient-drift 12s ease-in-out infinite alternate;
 }
 .abstract-background div:nth-child(2) {
   right: auto;
-  left: -640px;
+  left: -550px;
   top: 220px;
   width: 1000px;
   height: 1000px;
@@ -218,7 +218,7 @@ code {
   height: 240px;
   top: 50px;
   right: -490px;
-  animation: none;
+  animation: ambient-ribbon 16s ease-in-out infinite alternate;
 }
 .cursor-glow {
   position: fixed;
@@ -719,7 +719,7 @@ code {
 }
 @keyframes ambient-drift {
   to {
-    transform: translateY(25px) rotate(-20deg);
+    transform: translate(-65px, 80px) rotate(4deg) scale(1.08);
   }
 }
 @media (max-width: 1180px) {
@@ -1111,3 +1111,16 @@ code {
 
 /* Legacy component selectors must not shrink essential copy below readable sizes. */
 .result-details{align-items:start}.scan-result .fine-print,.bank-profile .fine-print,.utility-card .fine-print,.result-details .fine-print{font-size:14px;line-height:1.6}.bank-profile .text-link{font-size:16px}.copy-button{font-size:14px;min-height:36px;min-width:36px}.scan-result .check-list p{font-size:16px}.bank-profile address{font-size:17px}
+
+/* Transform-only ambient motion; the scanner stays on its opaque surface. */
+@keyframes ambient-ribbon { to { transform: translate(-110px, 65px) rotate(-8deg); } }
+@keyframes chart-reveal { 0%, 15% { stroke-dashoffset: 230; } 65%, 100% { stroke-dashoffset: 0; } }
+.visual-chart { stroke-dasharray: 230; animation: chart-reveal 6s ease-in-out infinite; }
+.visual-draw { stroke-dasharray: 160; animation: chart-reveal 7s ease-in-out infinite; }
+.bank-lookup-status { padding: 18px; margin-bottom: 20px; background: var(--surface); border-radius: 16px; }
+.bank-lookup-status p { font-size: 16px; margin-bottom: 12px; }
+@media (max-width: 600px) {
+ .abstract-background div { right: -610px; }
+ .abstract-background div:nth-child(2) { left: -850px; }
+ .abstract-background div:nth-child(3) { right: -660px; }
+}

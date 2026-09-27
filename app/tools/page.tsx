@@ -39,7 +39,7 @@ export default async function ToolsPage() {
                   className="directory-tool-card card"
                   href={`/tools/${t.slug}`}
                 >
-                  <ToolVisual kind={t.kind} />
+                  <ToolVisual slug={t.slug} />
                   <h3>{t.name}</h3>
                   <p>{t.description}</p>
                 </Link>

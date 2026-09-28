@@ -1,22 +1,21 @@
 "use client";
 import { useEffect, useState } from "react";
+import type { Locale } from "@/lib/i18n";
+import { displayName } from "@/lib/display-names";
 import { useLocale } from "./locale-provider";
+import { fetchJson } from "@/lib/fetch-json";
+import { toolFeedback } from "@/locales/tool-feedback";
 import { productCopy } from "@/locales/product";
 import currencies from "@/data/currencies.json";
 import {
   convertCurrency,
+  validateExchangeRates,
   parseAmount,
   type ExchangeRates,
 } from "@/lib/exchange-rates";
-function currencyName(code: string, locale: string) {
-  try {
-    return (
-      new Intl.DisplayNames([locale], { type: "currency" }).of(code) || code
-    );
-  } catch {
-    return code;
-  }
-}
+const currencyName = (code: string, locale: Locale) =>
+  displayName(code, locale, "currency");
+
 export function CurrencyTools({ mode }: { mode: "rates" | "converter" }) {
   const { locale } = useLocale();
   const t = productCopy[locale];
@@ -28,12 +27,20 @@ export function CurrencyTools({ mode }: { mode: "rates" | "converter" }) {
     [to, setTo] = useState("USD");
   useEffect(() => {
     const c = new AbortController();
-    fetch("/api/rates", { signal: c.signal })
-      .then(async (r) => {
-        if (!r.ok) throw Error();
-        return r.json();
+    fetchJson("/api/rates", c.signal)
+      .then(validateExchangeRates)
+      .then((rates) => {
+        if (c.signal.aborted) return;
+        setData(rates);
+        setFrom((current) =>
+          Object.hasOwn(rates.rates, current) ? current : "EUR",
+        );
+        setTo((current) =>
+          Object.hasOwn(rates.rates, current)
+            ? current
+            : Object.keys(rates.rates).find((code) => code !== "EUR")!,
+        );
       })
-      .then(setData)
       .catch(() => {
         if (!c.signal.aborted) setFailed(true);
       });
@@ -74,7 +81,13 @@ export function CurrencyTools({ mode }: { mode: "rates" | "converter" }) {
                 maxLength={22}
                 onChange={(e) => setAmount(e.target.value)}
                 aria-invalid={value === undefined}
+                aria-describedby={value === undefined ? "fx-error" : undefined}
               />
+              {value === undefined && (
+                <p id="fx-error" className="field-error" role="status">
+                  {toolFeedback[locale].amount}
+                </p>
+              )}
             </>
           )}
           <div className="currency-fields">

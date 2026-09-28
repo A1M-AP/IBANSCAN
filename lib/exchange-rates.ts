@@ -43,6 +43,8 @@ export function convertCurrency(
     amount > 1e12 ||
     !Object.hasOwn(rates, from) ||
     !Object.hasOwn(rates, to) ||
+    !Number.isFinite(rates[from]) ||
+    !Number.isFinite(rates[to]) ||
     rates[from] <= 0 ||
     rates[to] <= 0
   )
@@ -52,4 +54,43 @@ export function convertCurrency(
 export function parseAmount(value: string): number {
   if (!/^\d{1,13}(?:[.,]\d{1,8})?$/.test(value.trim())) return NaN;
   return Number(value.trim().replace(",", "."));
+}
+
+/** Validate the JSON boundary before any UI calculation. Sources remain fixed. */
+export function validateExchangeRates(value: unknown): ExchangeRates {
+  if (!value || typeof value !== "object")
+    throw new Error("Invalid rates response");
+  const data = value as Partial<ExchangeRates>;
+  if (
+    data.base !== "EUR" ||
+    typeof data.date !== "string" ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(data.date) ||
+    !Number.isFinite(Date.parse(data.date)) ||
+    new Date(data.date).toISOString().slice(0, 10) !== data.date ||
+    !data.rates ||
+    typeof data.rates !== "object" ||
+    Array.isArray(data.rates)
+  )
+    throw new Error("Invalid rates response");
+  const entries = Object.entries(data.rates);
+  if (
+    entries.length < 2 ||
+    entries.length > 100 ||
+    data.rates.EUR !== 1 ||
+    entries.some(
+      ([code, rate]) =>
+        !/^[A-Z]{3}$/.test(code) ||
+        typeof rate !== "number" ||
+        !Number.isFinite(rate) ||
+        rate <= 0 ||
+        rate > 1e9,
+    )
+  )
+    throw new Error("Invalid rates response");
+  return {
+    base: "EUR",
+    date: data.date,
+    rates: Object.fromEntries(entries),
+    source: ECB_SOURCE,
+  };
 }

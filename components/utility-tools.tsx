@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
-import { useId, useState } from "react";
+import { fetchJson } from "@/lib/fetch-json";
+import { useEffect, useId, useRef, useState } from "react";
 import { countries, getCountry } from "@/lib/countries";
 import {
   analyzeIban,
@@ -235,6 +236,8 @@ export function BankFinder() {
   const { locale } = useLocale();
   const t = productCopy[locale];
   const [busy, setBusy] = useState(false);
+  const pending = useRef<AbortController | null>(null);
+  useEffect(() => () => pending.current?.abort(), []);
   const id = useId();
   const [q, setQ] = useState("");
   const [results, setResults] = useState<DirectoryBank[] | null>(null);
@@ -247,18 +250,32 @@ export function BankFinder() {
       setError(ui.tools.bankEmpty);
       return;
     }
+    pending.current?.abort();
+    const controller = new AbortController();
+    pending.current = controller;
     setError("");
     setBusy(true);
     setResults(null);
     try {
-      const response = await fetch("/api/banks?q=" + encodeURIComponent(q));
-      if (!response.ok) throw Error();
-      const data = await response.json();
-      setResults(data.banks);
+      const data = (await fetchJson(
+        "/api/banks?q=" + encodeURIComponent(q.trim()),
+        controller.signal,
+      )) as { banks?: DirectoryBank[] };
+      if (
+        !Array.isArray(data?.banks) ||
+        data.banks.some((bank) => !bank || typeof bank.name !== "string")
+      )
+        throw Error();
+      if (pending.current === controller && !controller.signal.aborted)
+        setResults(data.banks);
     } catch {
-      setError(t.bankLoadError);
+      if (pending.current === controller && !controller.signal.aborted)
+        setError(t.bankLoadError);
     } finally {
-      setBusy(false);
+      if (pending.current === controller) {
+        pending.current = null;
+        setBusy(false);
+      }
     }
   }
   return (
@@ -274,6 +291,9 @@ export function BankFinder() {
             id={id + "-bank"}
             value={q}
             onChange={(e) => {
+              pending.current?.abort();
+              pending.current = null;
+              setBusy(false);
               setQ(e.target.value);
               setResults(null);
               setError("");

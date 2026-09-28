@@ -1,9 +1,9 @@
+import { displayName } from "./display-names";
 import type { IbanResult } from "./iban";
 import type { Locale } from "./i18n";
 
 export function countryName(code: string, locale: Locale, fallback = code): string {
-  try { return new Intl.DisplayNames([locale], { type: "region" }).of(code) || fallback; }
-  catch { return fallback; }
+  return displayName(code, locale, "region", fallback);
 }
 
 const messages = {

@@ -1,3 +1,5 @@
+import { scannerExamples } from "../lib/scanner-examples";
+import { formatIban } from "../lib/iban";
 import { expect, test, type Page, type TestInfo } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { readFile } from "node:fs/promises";
@@ -50,12 +52,12 @@ test("homepage example, validation errors, reset and private browser processing"
   const requests: { url: string; body: string }[] = [];
   page.on("request", (request) => requests.push({ url: request.url(), body: request.postData() || "" }));
   await page.getByRole("button", { name: /Italy/ }).click();
-  await expect(page.getByLabel("Enter an IBAN", { exact: true })).toHaveValue(italianPrinted);
+  await expect(page.getByLabel("Enter an IBAN", { exact: true })).toHaveValue(formatIban(scannerExamples.IT));
   await page.getByRole("button", { name: "Scan IBAN", exact: true }).click();
   await expect(page.getByRole("heading", { name: validHeading, exact: true })).toBeVisible();
-  await expect(page.getByText("Bank information unavailable", { exact: true })).toBeVisible();
-  await expect(page.getByText("05428", { exact: true })).toBeVisible();
-  await expect(page.getByText("11101", { exact: true })).toBeVisible();
+  await expect(page.locator(".bank-profile")).toContainText("UniCredit");
+  await expect(page.getByText("02008", { exact: true })).toBeVisible();
+  await expect(page.getByText("21703", { exact: true })).toBeVisible();
   await scan(page, "IT61X0542811101000000123456");
   await expect(page.getByText(/international check digits are incorrect/).first()).toBeVisible();
   await page.getByRole("button", { name: "Clear", exact: true }).click();

@@ -1124,3 +1124,5 @@ code {
  .abstract-background div:nth-child(2) { left: -850px; }
  .abstract-background div:nth-child(3) { right: -660px; }
 }
+
+.scanner-example-note { font-size: 14px; line-height: 1.6; color: var(--muted); padding: 18px 28px; margin: 0; border-top: 1px solid var(--border); }

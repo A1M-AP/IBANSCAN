@@ -1,6 +1,9 @@
 import type { BankRecord } from "./banks";
 export type Scheme = { ready: string; leaving: string; source: string };
 export type DirectoryBank = BankRecord & {
+  /** National register data, or a community-curated list that deserves an extra caveat. */
+  sourceKind?: "register" | "curated";
+  bicSource?: string;
   registryAddress?: string;
   registrySource?: string;
   registryDate?: string;

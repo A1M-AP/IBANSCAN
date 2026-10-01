@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { defaultLocale, isLocale, localePath, locales, type Locale } from "./i18n";
 
 export function siteUrl(): string {
   const configured = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ibanscan.com";
@@ -11,14 +12,31 @@ export function siteUrl(): string {
   }
 }
 
-export function pageMetadata(title: string, description: string, path: string, locale = "en"): Metadata {
-  const url = `${siteUrl()}${path}`;
+/** Absolute URL of a path in a given language. */
+export function localizedUrl(path: string, locale: Locale = defaultLocale): string {
+  const localized = localePath(locale, path);
+  return `${siteUrl()}${localized === "/" ? "" : localized}`;
+}
+
+/** hreflang alternates for every language, with English as x-default. */
+export function languageAlternates(path: string): Record<string, string> {
   return {
-    title,
+    ...Object.fromEntries(locales.map((l) => [l, localizedUrl(path, l)])),
+    "x-default": localizedUrl(path, defaultLocale),
+  };
+}
+
+export function pageMetadata(title: string, description: string, path: string, locale: string = defaultLocale): Metadata {
+  const url = localizedUrl(path, isLocale(locale) ? locale : defaultLocale);
+  // Titles that already carry the brand (the homepage) must not get the " | IBANScan" suffix twice.
+  const branded = title.startsWith("IBANScan");
+  const fullTitle = branded ? title : `${title} | IBANScan`;
+  return {
+    title: branded ? { absolute: title } : title,
     description,
-    alternates: { canonical: url },
-    openGraph: { title: `${title} | IBANScan`, description, url, siteName: "IBANScan", locale: ({ en: "en_US", it: "it_IT", de: "de_DE", fr: "fr_FR", es: "es_ES" } as Record<string, string>)[locale] || "en_US", type: "website", images: [{ url: `${siteUrl()}/opengraph-image`, width: 1200, height: 630, alt: "IBANScan — Scan. Verify. Understand." }] },
-    twitter: { card: "summary_large_image", title: `${title} | IBANScan`, description, images: [`${siteUrl()}/opengraph-image`] },
+    alternates: { canonical: url, languages: languageAlternates(path) },
+    openGraph: { title: fullTitle, description, url, siteName: "IBANScan", locale: ({ en: "en_US", it: "it_IT", de: "de_DE", fr: "fr_FR", es: "es_ES" } as Record<string, string>)[locale] || "en_US", type: "website", images: [{ url: `${siteUrl()}/opengraph-image`, width: 1200, height: 630, alt: "IBANScan — Scan. Verify. Understand." }] },
+    twitter: { card: "summary_large_image", title: fullTitle, description, images: [`${siteUrl()}/opengraph-image`] },
   };
 }
 
@@ -31,6 +49,6 @@ export function faqSchema(items: ReadonlyArray<{ question: string; answer: strin
   return { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: items.map((item) => ({ "@type": "Question", name: item.question, acceptedAnswer: { "@type": "Answer", text: item.answer } })) };
 }
 
-export function breadcrumbSchema(items: ReadonlyArray<{ name: string; path: string }>) {
-  return { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: items.map((item, index) => ({ "@type": "ListItem", position: index + 1, name: item.name, item: `${siteUrl()}${item.path}` })) };
+export function breadcrumbSchema(items: ReadonlyArray<{ name: string; path: string }>, locale: Locale = defaultLocale) {
+  return { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: items.map((item, index) => ({ "@type": "ListItem", position: index + 1, name: item.name, item: localizedUrl(item.path, locale) })) };
 }

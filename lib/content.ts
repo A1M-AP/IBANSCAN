@@ -1,3 +1,4 @@
+import type { Operator } from "./operator";
 /** Source-language editorial content. Keep prose here so locale editions can replace it as a unit. */
 export type ContentSection = { heading: string; paragraphs: string[]; list?: string[] };
 export type Guide = { slug: string; title: string; description: string; category: string; readTime: string; sections: ContentSection[]; faqs: { question: string; answer: string }[]; sources: { label: string; url: string }[]; tool: { label: string; href: string } };
@@ -95,22 +96,26 @@ export const countryEditorial: Record<string, { title: string; paragraphs: strin
   PT: { title: "National control digits remain part of the IBAN", paragraphs: ["A Portuguese IBAN has 25 characters. The national portion contains bank and branch identifiers, an account field and domestic control digits.", "Keep the entire national portion when formatting or validating. Extracted bank and branch codes are useful for interpretation but do not independently establish that a payment can be received."] },
 };
 
-export const legalPages: Record<string, { title: string; description: string; sections: ContentSection[] }> = {
+/** Draft-only sections are hidden once the operator's identity is configured (see lib/operator.ts). */
+export type LegalSection = ContentSection & { draftOnly?: boolean };
+
+export const legalPages: Record<string, { title: string; description: string; sections: LegalSection[] }> = {
   privacy: { title: "Privacy Policy", description: "How the default IBANScan application processes IBANs and reference information.", sections: [
     { heading: "Basic validation", paragraphs: ["The browser can perform IBAN normalization, format checks, checksum checks and local bulk processing without saving your IBAN in an application database. The current application does not provide a persistent account-history feature. Results remain available in the current page until you reset it or close it.", "Bank detail lookups send only country, bank and branch identifiers to our server, never the full IBAN or account number. Bank-directory searches send the search term. Currency conversions happen in your browser; only public ECB reference rates are fetched by the server."] },
     { heading: "Operational data and optional services", paragraphs: ["The server uses request metadata to enforce security and rate limits. Hosting and network providers may process connection information under their own operational settings. Application analytics are optional and should receive only predefined events without full IBANs.", "Advertising is disabled unless configured. Any future advertising, analytics or account-history provider must be reflected in this notice and in the deployment's consent controls before activation."] },
-    { heading: "Your choices and contact", paragraphs: ["Basic scanning does not require registration. Clear the current input with the reset control and avoid sharing a result if it contains account details you do not want to disclose. The contact page shows the operator contact when configured.", "This draft must be completed with the operator's identity, lawful processing basis where applicable, retention periods, hosting details, rights procedures and contact information before public launch."] },
+    { heading: "Your choices and contact", paragraphs: ["Basic scanning does not require registration. Clear the current input with the reset control and avoid sharing a result if it contains account details you do not want to disclose. The contact page shows the operator contact when configured."] },
+    { heading: "Draft status", draftOnly: true, paragraphs: ["This draft must be completed with the operator's identity, lawful processing basis where applicable, retention periods, hosting details, rights procedures and contact information before public launch."] },
   ] },
   cookies: { title: "Cookie Policy", description: "Storage choices and optional integrations in the default IBANScan application.", sections: [
     { heading: "Current storage", paragraphs: ["When you select a language, the site stores your choice in the first-party ibanscan-locale cookie for one year. This preference cookie contains only the selected language code and applies across the site. It uses SameSite=Lax and the Secure attribute on HTTPS connections. It is not an advertising identifier and does not contain an IBAN.", "The selected appearance is stored in your browser's localStorage as ibanscan-theme until you change it or clear the site's stored data. You can change language and appearance using the interface controls, or remove their saved values in your browser's site settings. Basic IBAN validation does not require an advertising cookie or an account login.", "The application is designed without a required third-party analytics or advertising integration. Its future authentication or billing features may introduce additional storage requirements."] },
     { heading: "Optional advertising and analytics", paragraphs: ["Before enabling services that use non-essential cookies or similar technologies, the operator must document each service, its purpose, duration and available controls. Consent must be obtained where applicable and withdrawal must be supported.", "No consent banner should suggest an advertising integration is active when none is configured. Conversely, a configured integration must not start storing non-essential identifiers merely because a placeholder ad component exists."] },
-    { heading: "Deployment-specific notice", paragraphs: ["The operator must audit the final deployed site, including hosting, consent tools and any embedded providers, and update this page with the actual technologies used. This page describes the default application and is not a completed deployment-specific cookie inventory."] },
+    { heading: "Deployment-specific notice", draftOnly: true, paragraphs: ["The operator must audit the final deployed site, including hosting, consent tools and any embedded providers, and update this page with the actual technologies used. This page describes the default application and is not a completed deployment-specific cookie inventory."] },
   ] },
   terms: { title: "Terms of Service", description: "Scope, permitted use and limitations of the IBANScan technical validation service.", sections: [
     { heading: "Service scope", paragraphs: ["IBANScan provides technical tools for interpreting IBAN structure and available reference information. It does not open accounts, hold funds, initiate payments or provide account-ownership verification. Its educational content is not personalized financial, legal or banking advice."] },
     { heading: "Responsible use", paragraphs: ["Only submit data you are entitled to process. Do not use the service to probe accounts, collect personal information, evade rate limits, attack infrastructure or misrepresent validation results as proof of account ownership.", "A successful validation result is not authorization to debit, credit or access an account."] },
     { heading: "Results and availability", paragraphs: ["Formats, banking directories and payment-scheme coverage can change. Reference data may be incomplete or unavailable. Verify payment instructions and time-sensitive information with the relevant provider.", "The initial product does not sell subscriptions or guarantee service levels. Any future paid service needs its own published commercial terms and billing disclosures."] },
-    { heading: "Operator details pending", paragraphs: ["The operator must complete these draft terms with its legal identity, contact, applicable jurisdiction, consumer provisions and any appropriate service-specific obligations before launch. No governing law, liability waiver or contractual remedy is invented in this draft."] },
+    { heading: "Operator details pending", draftOnly: true, paragraphs: ["The operator must complete these draft terms with its legal identity, contact, applicable jurisdiction, consumer provisions and any appropriate service-specific obligations before launch. No governing law, liability waiver or contractual remedy is invented in this draft."] },
   ] },
   disclaimer: { title: "Disclaimer", description: "What IBANScan validates, what verified bank data means, and what these tools cannot establish.", sections: [
     { heading: "A format check is a limited check", paragraphs: ["IBANScan checks IBAN structure and available banking data. It does not confirm account ownership, account balance, or whether an account is currently active.", "A valid result means the implemented length, national structure and international checksum checks passed. It is not evidence that a recipient is trustworthy or that a transfer will succeed."] },
@@ -118,3 +123,21 @@ export const legalPages: Record<string, { title: string; description: string; se
     { heading: "Calculated IBANs and currency rates", paragraphs: ["Currency conversions use dated ECB reference rates for information only; banks can apply different rates and fees.", "Examples and generated IBANs are for understanding formats or testing software. They do not create accounts and must not be used as payment instructions."] },
   ] },
 };
+
+/** Deployment-specific legal sections, rendered only from configured operator details. */
+export function operatorSections(page: string, op: Operator): ContentSection[] {
+  const identity = `${op.name}, ${op.address}${op.vatId ? ` (VAT ${op.vatId})` : ""}`;
+  const reach = `${op.email}${op.pec ? ` or certified email (PEC) ${op.pec}` : ""}`;
+  const host = op.hosting ? ` (${op.hosting})` : "";
+  if (page === "privacy")
+    return [
+      { heading: "Data controller", paragraphs: [`The data controller for this website is ${identity}. You can reach the controller at ${reach}.`] },
+      { heading: "Legal basis and retention", paragraphs: [`To deliver the site and protect it against abuse, connection data such as IP address, time and requested address is processed by the hosting provider${host} on the basis of legitimate interest (Article 6(1)(f) GDPR), for the period set by that provider's operational logs.`, "IBANScan itself keeps no database of visitors, IBANs, account numbers or search terms. The language cookie and the appearance setting are strictly necessary preference storage and do not require consent."] },
+      { heading: "Your rights", paragraphs: [`Under Articles 15 to 22 GDPR you can request access, rectification, erasure, restriction of processing, data portability, or object to processing by writing to ${reach}. You also have the right to lodge a complaint with the data protection supervisory authority of your country of residence or of the controller's establishment.`] },
+    ];
+  if (page === "terms")
+    return [{ heading: "Operator", paragraphs: [`This service is provided by ${identity}. Questions about these terms can be sent to ${reach}.`] }];
+  if (page === "cookies")
+    return [{ heading: "Contact", paragraphs: [`Questions about storage on this site can be sent to ${op.name} at ${reach}.`] }];
+  return [{ heading: "Operator", paragraphs: [`This website is operated by ${identity}. Contact: ${reach}.`] }];
+}

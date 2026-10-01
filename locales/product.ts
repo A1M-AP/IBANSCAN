@@ -94,6 +94,9 @@ const en = {
     "Verified institutional data, with transparent coverage. This directory does not contain customer details.",
   dataLimit:
     "No single public source supplies every bank, branch and certified email worldwide. Unavailable fields remain explicitly marked.",
+  curatedNote:
+    "From a community-maintained bank-code list, not an official register. Confirm details with the bank.",
+  vatId: "VAT no.",
   contactMissing:
     "Our public contact address will be published here when available. For account or payment assistance, contact your bank directly.",
 };
@@ -195,6 +198,9 @@ const it: Copy = {
     "Dati istituzionali verificati e copertura trasparente. Il repertorio non contiene dati dei clienti.",
   dataLimit:
     "Non esiste un’unica fonte pubblica con tutte le banche, filiali e PEC del mondo. I campi non disponibili sono indicati esplicitamente.",
+  curatedNote:
+    "Da un elenco di codici bancari curato dalla comunità, non da un registro ufficiale. Verifica i dati con la banca.",
+  vatId: "P.IVA",
   contactMissing:
     "L’indirizzo pubblico di contatto sarà pubblicato qui appena disponibile. Per assistenza su conti o pagamenti, rivolgiti direttamente alla tua banca.",
 };
@@ -289,6 +295,9 @@ const de: Copy = {
     "Verifizierte institutionelle Daten mit transparenter Abdeckung. Keine Kundendaten.",
   dataLimit:
     "Keine einzelne öffentliche Quelle enthält alle Banken, Filialen und PEC-Adressen weltweit.",
+  curatedNote:
+    "Aus einer von der Community gepflegten Bankleitzahlenliste, nicht aus einem amtlichen Register. Bitte Angaben bei der Bank prüfen.",
+  vatId: "USt-IdNr.",
   contactMissing:
     "Unsere Kontaktadresse wird hier veröffentlicht, sobald sie verfügbar ist. Für Kontofragen wenden Sie sich an Ihre Bank.",
 };
@@ -386,6 +395,9 @@ const es: Copy = {
     "Datos institucionales verificados con cobertura transparente. No contiene datos de clientes.",
   dataLimit:
     "Ninguna fuente pública contiene todos los bancos, sucursales y correos certificados del mundo.",
+  curatedNote:
+    "De una lista de códigos bancarios mantenida por la comunidad, no de un registro oficial. Confirma los datos con el banco.",
+  vatId: "NIF-IVA",
   contactMissing:
     "Publicaremos aquí nuestro correo de contacto cuando esté disponible. Para consultas sobre cuentas, contacta con tu banco.",
 };
@@ -483,6 +495,9 @@ const fr: Copy = {
     "Données institutionnelles vérifiées et couverture transparente. Aucune donnée client.",
   dataLimit:
     "Aucune source publique unique ne contient toutes les banques, agences et adresses certifiées du monde.",
+  curatedNote:
+    "Issu d’une liste de codes bancaires maintenue par la communauté, et non d’un registre officiel. Vérifiez auprès de la banque.",
+  vatId: "N° TVA",
   contactMissing:
     "Notre adresse de contact sera publiée ici dès qu’elle sera disponible. Pour votre compte, contactez directement votre banque.",
 };

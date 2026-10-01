@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import Link from "@/components/localized-link";
 import { fetchJson } from "@/lib/fetch-json";
 import { useEffect, useId, useRef, useState } from "react";
 import { countries, getCountry } from "@/lib/countries";

@@ -25,3 +25,33 @@ describe("localized validation", () => {
     expect(getUi("../../config")).toBe(getUi("en"));
   });
 });
+
+describe("language URLs", () => {
+  it("keeps English unprefixed and prefixes other languages", async () => {
+    const { localePath, stripLocale } = await import("@/lib/i18n");
+    expect(localePath("en", "/tools")).toBe("/tools");
+    expect(localePath("it", "/")).toBe("/it");
+    expect(localePath("it", "/tools?x=1#y")).toBe("/it/tools?x=1#y");
+    expect(localePath("de", "/#scanner")).toBe("/de#scanner");
+    for (const untouched of ["/api/banks", "/favicon.svg", "https://example.com/", "//evil.example", "#top"])
+      expect(localePath("fr", untouched)).toBe(untouched);
+    expect(stripLocale("/it/tools/iban-calculator")).toBe("/tools/iban-calculator");
+    expect(stripLocale("/es")).toBe("/");
+    expect(stripLocale("/tools")).toBe("/tools");
+    expect(stripLocale("/italy")).toBe("/italy");
+  });
+  it("publishes canonical and hreflang alternates for every language", async () => {
+    const { pageMetadata } = await import("@/lib/seo");
+    const meta = pageMetadata("Tools", "d", "/tools", "it");
+    expect(meta.alternates?.canonical).toBe("https://ibanscan.com/it/tools");
+    expect(meta.alternates?.languages).toEqual({
+      en: "https://ibanscan.com/tools",
+      it: "https://ibanscan.com/it/tools",
+      de: "https://ibanscan.com/de/tools",
+      fr: "https://ibanscan.com/fr/tools",
+      es: "https://ibanscan.com/es/tools",
+      "x-default": "https://ibanscan.com/tools",
+    });
+    expect(pageMetadata("IBANScan — Home", "d", "/", "en").title).toEqual({ absolute: "IBANScan — Home" });
+  });
+});

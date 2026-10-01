@@ -1,19 +1,19 @@
 "use client";
-import Link from "next/link";
+import Link from "@/components/localized-link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Logo } from "./logo";
 import { Icon } from "./icon";
 import { useLocale, useUi } from "./locale-provider";
 import { productCopy } from "@/locales/product";
-import { isLocale, localeNames, locales } from "@/lib/i18n";
+import { isLocale, localeNames, locales, stripLocale } from "@/lib/i18n";
 
 export function Header() {
   const ui = useUi();
   const { locale, setLocale, pending } = useLocale();
   const [menu, setMenu] = useState(false);
   const [dark, setDark] = useState(false);
-  const path = usePathname();
+  const path = stripLocale(usePathname());
   useEffect(() => {
     const refresh = () => setDark(document.documentElement.dataset.theme === "dark");
     const observer = new MutationObserver(refresh);

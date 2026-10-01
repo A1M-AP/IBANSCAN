@@ -18,6 +18,7 @@ import {
 } from "@/lib/iban";
 import { getCountry } from "@/lib/countries";
 import { track } from "@/lib/analytics";
+import { setCarriedScan } from "@/lib/scan-carry";
 import { Icon } from "./icon";
 import { useUi, useLocale } from "./locale-provider";
 import { countryName } from "@/lib/iban-display";
@@ -55,9 +56,14 @@ export function Scanner({
   const id = useId();
   const country = getCountry(normalizeIban(value).slice(0, 2));
   useEffect(() => {
-    if (!readHash) return;
+    setCarriedScan(result ? normalizeIban(value) : null);
+  }, [result, value]);
+  useEffect(() => () => setCarriedScan(null), []);
+  useEffect(() => {
     const processHash = () => {
       const params = new URLSearchParams(location.hash.slice(1));
+      // Shared links are read only where enabled; a language switch always restores the scan.
+      if (!readHash && params.get("carry") !== "1") return;
       const raw = params.get("iban");
       if (raw && raw.length <= 256) {
         setValue(formatIban(raw));

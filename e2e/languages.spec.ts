@@ -10,6 +10,7 @@ for (const locale of ["it", "de", "es", "fr"] as const) {
       await page.goto("/");
       await page.locator(".language-select").selectOption(locale);
       await expect(page.locator("html")).toHaveAttribute("lang", locale);
+      await expect(page).toHaveURL(new RegExp(`/${locale}$`));
       await expect(page.getByRole("heading", { level: 1 })).toContainText(
         t.title,
       );
@@ -67,4 +68,29 @@ test("language switch preserves the local scan", async ({ page }) => {
     }),
   ).toBeVisible();
   await expect(page.locator(".ai-assistant")).toHaveCount(0);
+});
+
+test("each language has its own indexable URL with hreflang alternates", async ({ page, request }) => {
+  await page.goto("/it/tools");
+  await expect(page.locator("html")).toHaveAttribute("lang", "it");
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /\/it\/tools$/);
+  for (const [lang, path] of [["en", "/tools"], ["de", "/de/tools"], ["x-default", "/tools"]])
+    await expect(page.locator(`link[rel="alternate"][hreflang="${lang}"]`)).toHaveAttribute("href", new RegExp(path.replace(/\//g, "\\/") + "$"));
+  // Internal links keep the visitor in Italian.
+  await expect(page.locator('a[href="/it/countries"]').first()).toBeVisible();
+  const english = await request.get("/en/tools", { maxRedirects: 0 });
+  expect(english.status()).toBe(308);
+  expect(english.headers().location).toMatch(/\/tools$/);
+  const missing = await request.get("/it/does-not-exist");
+  expect(missing.status()).toBe(404);
+  const sitemap = await (await request.get("/sitemap.xml")).text();
+  expect(sitemap).toContain("/fr/resources/what-is-an-iban</loc>");
+  expect(sitemap).toContain('hreflang="es"');
+});
+test("a German IBAN resolves its bank from the national register", async ({ page }) => {
+  await page.goto("/");
+  await page.getByLabel("Enter an IBAN", { exact: true }).fill("DE89370400440532013000");
+  await page.getByRole("button", { name: "Scan IBAN", exact: true }).click();
+  await expect(page.locator(".bank-profile")).toContainText("Commerzbank");
+  await expect(page.locator(".bank-profile")).toContainText("COBADEFFXXX");
 });

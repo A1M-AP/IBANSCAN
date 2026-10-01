@@ -200,6 +200,9 @@ export function BankProfile({ bank }: { bank: DirectoryBank | null }) {
         )}
         <p className="fine-print">{t.schemeNote}</p>
       </div>
+      {bank.sourceKind === "curated" && (
+        <p className="fine-print">{t.curatedNote}</p>
+      )}
       <p className="fine-print">{b.scope}</p>
     </div>
   );

@@ -20,6 +20,22 @@ export const localeCookie = "ibanscan-locale";
 export function isLocale(value: unknown): value is Locale {
   return typeof value === "string" && locales.includes(value as Locale);
 }
+/** English lives at unprefixed URLs; every other language under /<locale>. */
+export function localePath(locale: Locale, path: string): string {
+  if (!path.startsWith("/") || path.startsWith("//")) return path;
+  if (locale === defaultLocale || /^\/(api|_next)(\/|$)/.test(path)) return path;
+  const cut = path.search(/[?#]/);
+  const pathname = cut < 0 ? path : path.slice(0, cut);
+  const suffix = cut < 0 ? "" : path.slice(cut);
+  if (/\.[a-z0-9]+$/i.test(pathname)) return path;
+  return `/${locale}${pathname === "/" ? "" : pathname}${suffix}`;
+}
+/** Removes a locale prefix: "/it/tools" -> "/tools", "/it" -> "/". */
+export function stripLocale(pathname: string): string {
+  const match = pathname.match(/^\/([a-z]{2})(?=\/|$)/);
+  if (!match || !isLocale(match[1])) return pathname || "/";
+  return pathname.slice(3) || "/";
+}
 export const localeNames: Record<Locale, string> = {
   en: "English",
   it: "Italiano",

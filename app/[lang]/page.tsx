@@ -1,6 +1,8 @@
 import Link from "@/components/localized-link";
 import { Scanner } from "@/components/scanner";
 import { ToolVisual } from "@/components/tool-visual";
+import { ToolBadge } from "@/components/tool-badge";
+import { toolTone } from "@/lib/tools";
 import { Icon } from "@/components/icon";
 import { AdSlot } from "@/components/ad-slot";
 import { countries, getCountry } from "@/lib/countries";
@@ -34,6 +36,20 @@ export default async function Home() {
           <div />
           <div />
           <div />
+          <svg className="hero-orbit" viewBox="0 0 400 400">
+            <circle cx="200" cy="200" r="190" />
+            <circle cx="200" cy="200" r="135" />
+            <circle cx="200" cy="200" r="80" />
+            <g className="orbit-ring orbit-slow">
+              <circle className="orbit-dot tone-iban" cx="200" cy="10" r="6" />
+            </g>
+            <g className="orbit-ring orbit-mid">
+              <circle className="orbit-dot tone-bank" cx="335" cy="200" r="5" />
+            </g>
+            <g className="orbit-ring orbit-fast">
+              <circle className="orbit-dot tone-currency" cx="200" cy="280" r="4" />
+            </g>
+          </svg>
         </div>
         <div className="hero page-shell">
           <span className="eyebrow">{t.eyebrow}</span>
@@ -52,9 +68,11 @@ export default async function Home() {
         </div>
       </section>
       <section className="stats-section">
-        <div className="page-shell stats-grid">
+        <div className="page-shell stats-grid" data-reveal>
           <div>
-            <strong>{countries.length}</strong>
+            <strong>
+              <span className="stat-count" data-count={countries.length}>{countries.length}</span>
+            </strong>
             <span>{ui.home.statCountries}</span>
           </div>
           <div>
@@ -72,10 +90,10 @@ export default async function Home() {
         </div>
       </section>
       <section className="page-shell section">
-        <div className="section-heading centered">
+        <div className="section-heading centered" data-reveal>
           <h2>{t.process}</h2>
         </div>
-        <div className="process-grid">
+        <div className="process-grid" data-reveal>
           {t.steps.map((step, i) => (
             <article key={step}>
               <span className="step-number">0{i + 1}</span>
@@ -100,13 +118,15 @@ export default async function Home() {
               {t.explore} ↗
             </Link>
           </div>
-          <div className="premium-tools-grid">
+          <div className="premium-tools-grid" data-reveal>
             {featured.map((tool) => (
               <Link
-                className="premium-tool"
+                className="premium-tool spotlight"
+                data-tone={toolTone(tool.group)}
                 href={"/tools/" + tool.slug}
                 key={tool.slug}
               >
+                <ToolBadge icon={tool.icon} group={tool.group} />
                 <ToolVisual slug={tool.slug} />
                 <div className="premium-tool-copy">
                   <h3>
@@ -122,11 +142,11 @@ export default async function Home() {
       </section>
       <AdSlot placement="home" />
       <section className="page-shell section">
-        <div className="section-heading centered">
+        <div className="section-heading centered" data-reveal>
           <h2>{ui.home.countryTitle}</h2>
           <p>{ui.home.countryDescription}</p>
         </div>
-        <div className="country-preview-grid">
+        <div className="country-preview-grid" data-reveal>
           {["IT", "DE", "FR", "ES", "NL", "GB"].map((code) => {
             const c = getCountry(code)!;
             return (
@@ -159,7 +179,8 @@ export default async function Home() {
         </Link>
       </section>
       <section className="final-cta">
-        <div className="page-shell">
+        <div className="final-cta-art" aria-hidden="true" />
+        <div className="page-shell" data-reveal>
           <h2>{ui.home.finalTitle}</h2>
           <p>{ui.scanner.disclaimer}</p>
           <Link href="/#scanner" className="button primary">

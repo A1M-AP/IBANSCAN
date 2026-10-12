@@ -1,4 +1,6 @@
 import { ToolVisual } from "@/components/tool-visual";
+import { ToolBadge } from "@/components/tool-badge";
+import { toolTone } from "@/lib/tools";
 import Link from "@/components/localized-link";
 
 import { getLocalizedTools, toolGroupName } from "@/lib/localized-tools";
@@ -30,15 +32,17 @@ export default async function ToolsPage() {
             {toolGroupName(group, locale)}
             <span>{toolCatalog.filter((t) => t.group === group).length}</span>
           </h2>
-          <div className="grid-3">
+          <div className="grid-3" data-reveal>
             {toolCatalog
               .filter((t) => t.group === group)
               .map((t) => (
                 <Link
                   key={t.slug}
-                  className="directory-tool-card card"
+                  className="directory-tool-card card spotlight"
+                  data-tone={toolTone(t.group)}
                   href={`/tools/${t.slug}`}
                 >
+                  <ToolBadge icon={t.icon} group={t.group} />
                   <ToolVisual slug={t.slug} />
                   <h3>{t.name}</h3>
                   <p>{t.description}</p>

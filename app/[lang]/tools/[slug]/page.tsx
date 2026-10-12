@@ -12,6 +12,8 @@ import {
 } from "@/components/utility-tools";
 import { AdSlot } from "@/components/ad-slot";
 import { Icon } from "@/components/icon";
+import { ToolBadge } from "@/components/tool-badge";
+import { toolTone } from "@/lib/tools";
 import { toolCatalog as sourceTools } from "@/lib/tools";
 import { getLocalizedTools, toolGroupName } from "@/lib/localized-tools";
 import { pageMetadata } from "@/lib/seo";
@@ -44,12 +46,13 @@ export default async function ToolPage({
   const tool = toolCatalog.find((t) => t.slug === slug);
   if (!tool) notFound();
   return (
-    <div className="page-shell tool-page">
-      <div className="page-heading centered">
+    <div className="page-shell tool-page" data-tone={toolTone(tool.group)}>
+      <div className="page-heading centered tool-heading">
         <Link href="/tools" className="eyebrow tool-breadcrumb">
           {ui.toolPage.breadcrumb} <span>/</span>{" "}
           {toolGroupName(tool.group, locale).toUpperCase()}
         </Link>
+        <ToolBadge icon={tool.icon} group={tool.group} size="lg" />
         <h1>{tool.name}</h1>
         <p>{tool.detail}</p>
       </div>
@@ -101,17 +104,18 @@ export default async function ToolPage({
       )}
       <section className="related-tools">
         <h2>{ui.tools.related}</h2>
-        <div className="tools-grid">
+        <div className="tools-grid" data-reveal>
           {toolCatalog
             .filter((t) => t.slug !== tool.slug && t.group === tool.group)
             .slice(0, 3)
             .map((t) => (
               <Link
                 href={`/tools/${t.slug}`}
-                className="tool-card"
+                className="tool-card spotlight"
+                data-tone={toolTone(t.group)}
                 key={t.slug}
               >
-                <Icon name={t.icon} />
+                <ToolBadge icon={t.icon} group={t.group} />
                 <div>
                   <h3>{t.name}</h3>
                   <p>{t.description}</p>

@@ -9,9 +9,11 @@ import { lang } from "next/root-params";
 import { notFound } from "next/navigation";
 import { LocaleProvider } from "@/components/locale-provider";
 import { CursorGlow } from "@/components/cursor-glow";
+import { Motion } from "@/components/motion";
 import "../globals.css";
 import "@/styles/refinements.css";
 import "@/styles/apple.css";
+import "@/styles/motion.css";
 export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL || "https://ibanscan.com",
@@ -51,7 +53,7 @@ export const viewport: Viewport = {
 export function generateStaticParams() {
   return locales.map((lang) => ({ lang }));
 }
-const themeScript = `(function(){try{var t=localStorage.getItem('ibanscan-theme');document.documentElement.dataset.theme=t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light'}catch(e){}})()`;
+const themeScript = `(function(){var d=document.documentElement;try{var t=localStorage.getItem('ibanscan-theme');d.dataset.theme=t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light'}catch(e){}try{if(matchMedia('(prefers-reduced-motion: no-preference)').matches)d.classList.add('motion')}catch(e){}})()`;
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -71,6 +73,7 @@ export default async function RootLayout({
           </a>
           <Header />
           <CursorGlow />
+          <Motion />
           {cmp && <Script src={cmp} strategy="afterInteractive" />}
           <noscript>
             <p className="page-shell alert">{ui.shell.noScript}</p>

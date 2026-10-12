@@ -72,3 +72,25 @@ test("each tool has distinct artwork; background animates and respects reduced m
     ).toBe(true);
   }
 });
+
+test("tool icons are distinct, coloured by category, and motion is opt-in", async ({ page }) => {
+  await page.goto("/tools");
+  const badges = page.locator(".directory-tool-card .tool-badge");
+  await expect(badges).toHaveCount(15);
+  const icons = await badges.evaluateAll((els) => els.map((el) => el.innerHTML));
+  expect(new Set(icons).size).toBe(15);
+  const tones = await badges.evaluateAll((els) => [...new Set(els.map((el) => el.getAttribute("data-tone")))]);
+  expect(tones.sort()).toEqual(["bank", "business", "currency", "iban"]);
+  // Reduced motion (the suite default): nothing is hidden or animated.
+  await expect(page.locator("html")).not.toHaveClass(/motion/);
+  await expect(page.locator(".directory-tool-card").first()).toHaveCSS("opacity", "1");
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/");
+  await expect(page.locator("html")).toHaveClass(/motion/);
+  const card = page.locator(".premium-tool").last();
+  await card.scrollIntoViewIfNeeded();
+  await expect(page.locator(".premium-tools-grid")).toHaveClass(/revealed/);
+  await expect(card).toHaveCSS("opacity", "1");
+  await expect(page.locator(".stat-count")).toHaveText(/^\d+$/);
+  await expect.poll(() => page.locator(".stat-count").textContent()).toBe("89");
+});

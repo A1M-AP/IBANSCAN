@@ -1,0 +1,317 @@
+/* Colour accents, abstract art and motion layered on the neutral design.
+   Every animation is opt-in through html.motion (added only when reduced motion is not requested). */
+:root {
+  --tone-iban: #4f46e5;
+  --tone-bank: #0f766e;
+  --tone-business: #b45309;
+  --tone-currency: #be185d;
+  --grad: linear-gradient(100deg, #4f46e5 0%, #7c3aed 38%, #be185d 68%, #0f766e 100%);
+  --orb-opacity: 0.5;
+  --tone: var(--tone-iban);
+}
+:root[data-theme="dark"] {
+  --tone-iban: #a5b4fc;
+  --tone-bank: #5eead4;
+  --tone-business: #fcd34d;
+  --tone-currency: #f9a8d4;
+  --grad: linear-gradient(100deg, #a5b4fc 0%, #c4b5fd 38%, #f9a8d4 68%, #5eead4 100%);
+  --orb-opacity: 0.32;
+}
+[data-tone="iban"], .tone-iban { --tone: var(--tone-iban); }
+[data-tone="bank"], .tone-bank { --tone: var(--tone-bank); }
+[data-tone="business"], .tone-business { --tone: var(--tone-business); }
+[data-tone="currency"], .tone-currency { --tone: var(--tone-currency); }
+
+/* Hero: soft colour fields, a fine dot grid and slow orbits. */
+.hero h1 > span {
+  color: var(--tone-iban);
+  background: var(--grad);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.abstract-background div {
+  border: 0;
+  border-radius: 50%;
+  box-shadow: none;
+  filter: blur(70px);
+  opacity: var(--orb-opacity);
+  width: 560px;
+  height: 560px;
+  right: -180px;
+  top: -140px;
+  background: radial-gradient(circle at 35% 35%, var(--tone-iban), transparent 68%);
+}
+.abstract-background div:nth-child(2) {
+  left: -260px;
+  top: 260px;
+  width: 620px;
+  height: 620px;
+  background: radial-gradient(circle at 60% 40%, var(--tone-bank), transparent 66%);
+}
+.abstract-background div:nth-child(3) {
+  width: 520px;
+  height: 260px;
+  top: 120px;
+  right: 8%;
+  background: radial-gradient(ellipse at center, var(--tone-currency), transparent 70%);
+  opacity: calc(var(--orb-opacity) * 0.55);
+}
+.abstract-background::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(color-mix(in srgb, var(--text) 14%, transparent) 1px, transparent 1.3px);
+  background-size: 26px 26px;
+  mask-image: radial-gradient(ellipse 70% 55% at 50% 30%, #000 20%, transparent 75%);
+}
+.hero-orbit {
+  position: absolute;
+  width: 440px;
+  height: 440px;
+  right: -110px;
+  top: 40px;
+  fill: none;
+  stroke: var(--strong-border);
+  stroke-width: 1;
+  opacity: 0.8;
+}
+.hero-orbit .orbit-dot { fill: var(--tone); stroke: none; }
+.orbit-ring { transform-origin: 200px 200px; }
+@media (max-width: 760px) {
+  .hero-orbit { width: 300px; height: 300px; right: -150px; top: 10px; opacity: 0.55; }
+  .abstract-background div { width: 380px; height: 380px; right: -170px; }
+  .abstract-background div:nth-child(2) { width: 420px; height: 420px; left: -230px; }
+  .abstract-background div:nth-child(3) { width: 300px; height: 180px; right: -60px; }
+}
+
+/* Scanner: a fine gradient hairline and a coloured focus halo. */
+.scanner-card { position: relative; }
+.scanner-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 24px auto;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--grad);
+  background-size: 220% 100%;
+  opacity: 0.85;
+}
+.scanner-card:focus-within {
+  border-color: color-mix(in srgb, var(--tone-iban) 45%, var(--border));
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--tone-iban) 12%, transparent), 0 24px 60px -34px color-mix(in srgb, var(--tone-iban) 70%, transparent);
+}
+
+/* Tool icon chips. */
+.tool-badge {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  color: var(--tone);
+  background: color-mix(in srgb, var(--tone) 11%, var(--bg));
+  border: 1px solid color-mix(in srgb, var(--tone) 24%, transparent);
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1.3), background 0.25s;
+}
+.tool-badge-lg {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  margin: 18px auto 0;
+  box-shadow: 0 18px 40px -22px color-mix(in srgb, var(--tone) 80%, transparent);
+}
+.premium-tool,
+.directory-tool-card { position: relative; }
+.premium-tool > .tool-badge,
+.directory-tool-card > .tool-badge {
+  position: absolute;
+  z-index: 1;
+  top: 20px;
+  left: 20px;
+}
+.tool-card > .tool-badge { width: 40px; height: 40px; border-radius: 12px; }
+
+/* Cards: tinted artwork, pointer light and a coloured lift on hover. */
+.premium-tool,
+.directory-tool-card,
+.tool-card { isolation: isolate; overflow: hidden; }
+.premium-tool .visual-draw,
+.directory-tool-card .visual-draw,
+.premium-tool .visual-chart,
+.directory-tool-card .visual-chart { stroke: var(--tone); }
+.tool-visual svg { transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.spotlight { position: relative; }
+.spotlight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+  background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 30%), color-mix(in srgb, var(--tone) 14%, transparent), transparent 70%);
+}
+.spotlight:hover::before,
+.spotlight:focus-visible::before { opacity: 1; }
+.premium-tool:hover,
+.directory-tool-card:hover,
+.tool-card:hover {
+  border-color: color-mix(in srgb, var(--tone) 42%, var(--border));
+  box-shadow: 0 26px 50px -34px color-mix(in srgb, var(--tone) 75%, transparent);
+}
+.premium-tool:hover .tool-badge,
+.directory-tool-card:hover .tool-badge,
+.tool-card:hover .tool-badge {
+  transform: translateY(-2px) rotate(-6deg) scale(1.06);
+  background: color-mix(in srgb, var(--tone) 18%, var(--bg));
+}
+.premium-tool:hover .tool-visual svg,
+.directory-tool-card:hover .tool-visual svg { transform: scale(1.05) translateY(-3px); }
+
+/* Tool page heading: a soft halo behind the icon. */
+.tool-heading { position: relative; }
+.tool-heading::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  top: 30px;
+  width: 520px;
+  max-width: 100%;
+  height: 260px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--tone) 16%, transparent), transparent 70%);
+  filter: blur(10px);
+  pointer-events: none;
+}
+
+/* Stats and process: gradient hairlines and numbered pills. */
+.stats-section { position: relative; }
+.stats-section::before,
+.stats-section::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--grad);
+  opacity: 0.55;
+}
+.stats-section::before { top: 0; }
+.stats-section::after { bottom: 0; }
+.stat-number,
+.stats-grid strong [data-count] { font-variant-numeric: tabular-nums; }
+.step-number {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: linear-gradient(var(--bg), var(--bg)) padding-box, var(--grad) border-box;
+  color: var(--text);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.soft-section { position: relative; isolation: isolate; }
+.soft-section::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: radial-gradient(color-mix(in srgb, var(--text) 10%, transparent) 1px, transparent 1.3px);
+  background-size: 24px 24px;
+  mask-image: linear-gradient(180deg, #000, transparent 55%);
+  pointer-events: none;
+}
+.country-preview-card .country-flag { transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1.4); }
+.country-preview-card:hover .country-flag { transform: translateY(-4px) rotate(-8deg) scale(1.12); }
+
+/* Final call to action over a slowly drifting colour field. */
+.final-cta { position: relative; overflow: hidden; isolation: isolate; }
+.final-cta-art {
+  position: absolute;
+  inset: -40% -10%;
+  z-index: -1;
+  opacity: 0.22;
+  filter: blur(60px);
+  background:
+    radial-gradient(closest-side at 25% 50%, var(--tone-iban), transparent),
+    radial-gradient(closest-side at 75% 45%, var(--tone-currency), transparent),
+    radial-gradient(closest-side at 50% 80%, var(--tone-bank), transparent);
+}
+
+/* Primary buttons: a light sheen sweeps across on hover. */
+.button.primary,
+.scan-button { position: relative; overflow: hidden; }
+.button.primary::after,
+.scan-button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-120%) skewX(-20deg);
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.28), transparent);
+  pointer-events: none;
+}
+
+/* ---------- Motion (only with html.motion) ---------- */
+@keyframes reveal-up { from { opacity: 0; translate: 0 22px; } to { opacity: 1; translate: none; } }
+@keyframes reveal-show { to { opacity: 1; } }
+@keyframes gradient-pan { to { background-position: 100% 0; } }
+@keyframes orbit-spin { to { transform: rotate(360deg); } }
+@keyframes cta-drift { 50% { transform: translate(4%, -6%) scale(1.08); } }
+@keyframes badge-pop { 0% { transform: scale(0.6) rotate(-14deg); opacity: 0; } 70% { transform: scale(1.08) rotate(3deg); } 100% { transform: none; opacity: 1; } }
+
+html.motion .hero > * { animation: reveal-up 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+html.motion .hero > :nth-child(2) { animation-delay: 0.08s; }
+html.motion .hero > :nth-child(3) { animation-delay: 0.18s; }
+html.motion .hero > :nth-child(4) { animation-delay: 0.28s; }
+html.motion .hero > :nth-child(5) { animation-delay: 0.38s; }
+html.motion .hero h1 > span { animation: gradient-pan 7s ease-in-out infinite alternate; }
+html.motion .scanner-card::before { animation: gradient-pan 6s ease-in-out infinite alternate; }
+html.motion .orbit-slow { animation: orbit-spin 38s linear infinite; }
+html.motion .orbit-mid { animation: orbit-spin 26s linear infinite reverse; }
+html.motion .orbit-fast { animation: orbit-spin 17s linear infinite; }
+html.motion .final-cta-art { animation: cta-drift 14s ease-in-out infinite; }
+html.motion .tool-heading .tool-badge-lg { animation: badge-pop 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+html.motion .button.primary:hover::after,
+html.motion .scan-button:hover::after { transition: transform 0.75s ease; transform: translateX(120%) skewX(-20deg); }
+
+/* Scroll reveal. Children stagger with --i; a fallback shows content even if the observer never runs. */
+html.motion [data-reveal] > * { opacity: 0; }
+html.motion [data-reveal]:not(.revealed) > * { animation: reveal-show 0s 3s forwards; }
+html.motion [data-reveal].revealed > * {
+  animation: reveal-up 0.75s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(min(var(--i, 0), 8) * 70ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tool-badge,
+  .tool-visual svg,
+  .country-preview-card .country-flag { transition: none; }
+  .premium-tool:hover .tool-badge,
+  .directory-tool-card:hover .tool-badge,
+  .tool-card:hover .tool-badge,
+  .premium-tool:hover .tool-visual svg,
+  .directory-tool-card:hover .tool-visual svg,
+  .country-preview-card:hover .country-flag { transform: none; }
+}
+.stats-grid strong > span.stat-count { font-size: inherit; color: inherit; margin: 0; }
+.tool-page .feature-icon {
+  color: var(--tone);
+  background: color-mix(in srgb, var(--tone) 10%, var(--bg));
+  border-color: color-mix(in srgb, var(--tone) 22%, transparent);
+}
+.tool-page .scanner-card::before,
+.tool-page .utility-card::before { background: linear-gradient(90deg, transparent, var(--tone), transparent); }
+.tool-page .utility-card { position: relative; }
+.tool-page .utility-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 24px auto;
+  height: 2px;
+  border-radius: 2px;
+  opacity: 0.7;
+}

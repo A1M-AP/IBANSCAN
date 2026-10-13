@@ -1,4 +1,4 @@
-export type AnalyticsEvent = "iban_scan" | "iban_valid" | "iban_invalid" | "tool_open" | "ai_question" | "csv_upload" | "api_playground_use";
+export type AnalyticsEvent = "iban_scan" | "iban_valid" | "iban_invalid" | "tool_open" | "csv_upload";
 type AnalyticsProvider = (event: AnalyticsEvent) => void;
 let provider: AnalyticsProvider | undefined;
 // Disabled by default. The contract deliberately accepts no payload, URL or IBAN.

@@ -99,6 +99,24 @@ describe("bank directory and dated schemes", () => {
     expect(directoryLookup("IT", "99999")).toBeNull();
     expect(directorySearch("nonexistent_xyz")).toEqual([]);
   });
+  it("resolves banks outside Italy from national registers, with their source", () => {
+    expect(directoryLookup("DE", "37040044")).toMatchObject({
+      name: "Commerzbank",
+      bic: "COBADEFFXXX",
+      sourceKind: "register",
+    });
+    expect(directoryLookup("ES", "2100")?.bic).toBe("CAIXESBB");
+    expect(directoryLookup("FR", "30004")).toMatchObject({ bic: "BNPAFRPPIFN", sourceKind: "curated" });
+    expect(directoryLookup("DE", "37040044")?.source).toMatch(/^https:\/\/github\.com\/mdomke\/schwifty\/blob\/.+\/generated_de\.json$/);
+    expect(directoryLookup("DE", "00000000")).toBeNull();
+    expect(directoryLookup("DE", "constructor")).toBeNull();
+  });
+  it("ranks exact codes and names before partial matches", () => {
+    expect(directorySearch("37040044")[0].name).toBe("Commerzbank");
+    expect(directorySearch("intesa")[0].bic).toBe("BCITITMM");
+    expect(directorySearch("deutsche bank")[0].name).toBe("Deutsche Bank");
+    expect(directorySearch("bank").length).toBeLessThanOrEqual(20);
+  });
   it("checks effective and departure dates and leaves missing membership unknown", () => {
     expect(schemeState(undefined)).toBe("unknown");
     expect(

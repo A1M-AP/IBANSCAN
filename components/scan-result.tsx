@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import type { DirectoryBank } from "@/lib/bank-directory-types";
-import Link from "next/link";
+import Link from "@/components/localized-link";
 import { bankLookupCopy } from "@/locales/bank-lookup";
 import { BankProfile } from "./bank-profile";
 import { localizeResult } from "@/lib/iban-display";

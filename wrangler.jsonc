@@ -4,6 +4,8 @@
   "workers_dev": true,
   "preview_urls": true,
   "main": ".open-next/worker.js",
+  // Builds the OpenNext artifact when missing, so preview branches (versions upload) work too.
+  "build": { "command": "node scripts/ensure-cloudflare-build.mjs" },
   "compatibility_date": "2026-09-26",
   "compatibility_flags": [
     "nodejs_compat",

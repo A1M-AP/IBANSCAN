@@ -5,7 +5,7 @@ import { googleCmpUrl } from "@/lib/advertising";
 import { productCopy } from "@/locales/product";
 export type AdPlacement = "home" | "tool" | "result" | "resource";
 export type AdProvider = { render: (placement: AdPlacement) => ReactNode };
-/** Reserved inventory is visible; no ad network loads without an integrated consent provider. */
+/** Nothing renders until AdSense and a certified consent provider are configured; no ad network loads without consent. */
 export async function AdSlot({
   placement,
   provider,
@@ -35,15 +35,15 @@ export async function AdSlot({
     /^ca-pub-\d{16}$/.test(client) &&
     /^\d{6,20}$/.test(slot) &&
     googleCmpUrl(process.env.NEXT_PUBLIC_GOOGLE_CMP_URL);
+  // An empty "advertising space" box makes an unconfigured site look unfinished.
+  if (!provider && !configured) return null;
   return (
     <aside className="ad-slot" data-placement={placement} aria-label={t.ad}>
       <span className="ad-label">{t.ad}</span>
       {provider ? (
         provider.render(placement)
-      ) : configured ? (
-        <GoogleAd client={client} slot={slot} placeholder={placeholder} />
       ) : (
-        placeholder
+        <GoogleAd client={client} slot={slot} placeholder={placeholder} />
       )}
     </aside>
   );

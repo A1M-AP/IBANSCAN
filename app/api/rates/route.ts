@@ -1,17 +1,11 @@
-import { ECB_RATES_URL, parseEcbRates } from "@/lib/exchange-rates";
+import { getReferenceRates } from "@/lib/rates-cache";
 export async function GET() {
   try {
-    const upstream = await fetch(ECB_RATES_URL, {
-      cache: "no-store",
-      redirect: "error",
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!upstream.ok) throw new Error("Upstream unavailable");
-    const text = await upstream.text();
-    const data = parseEcbRates(text);
+    const { data, stale } = await getReferenceRates();
+    const maxAge = stale ? 60 : 300;
     return Response.json(data, {
       headers: {
-        "Cache-Control": "public, max-age=300, s-maxage=3600",
+        "Cache-Control": `public, max-age=${maxAge}, s-maxage=${maxAge}`,
         "X-Content-Type-Options": "nosniff",
       },
     });

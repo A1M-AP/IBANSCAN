@@ -1,10 +1,11 @@
 import "server-only";
-import { cookies } from "next/headers";
+import { lang } from "next/root-params";
 import { cache } from "react";
-import { defaultLocale, getMessages, getUi, isLocale, localeCookie } from "./i18n";
+import { defaultLocale, getMessages, getUi, isLocale } from "./i18n";
 
+/** The language comes from the URL (/it/..., /de/...); unprefixed URLs are English. */
 export const getLocale = cache(async () => {
-  const value = (await cookies()).get(localeCookie)?.value;
+  const value = await lang();
   return isLocale(value) ? value : defaultLocale;
 });
 

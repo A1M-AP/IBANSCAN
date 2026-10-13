@@ -4,6 +4,7 @@ import italian from "@/data/italian-banks.json";
 import branches from "@/data/italian-branches.json";
 import offices from "@/data/bank-offices.json";
 import contacts from "@/data/bank-contacts.json";
+import national from "@/data/national-banks.json";
 import { lookupBank, searchBanks } from "./banks";
 import type { DirectoryBank } from "./bank-directory-types";
 const nameKey = (s: string) =>
@@ -14,6 +15,24 @@ const nameKey = (s: string) =>
     .replace(/[^A-Z0-9]/g, "");
 const bicKey = (s: string) => (s.length === 8 ? s + "XXX" : s);
 const epcByBic = new Map(epc.records.map((r) => [r.bic, r]));
+type NationalCountry = { kind: string; file: string; banks: Record<string, (string | number)[]> };
+const nationalCountries = national.countries as Record<string, NationalCountry>;
+/** National bank-code registers (schwifty) for countries beyond the detailed Italian directory. */
+function nationalBank(country: string, identifier: string): DirectoryBank | null {
+  const entry = nationalCountries[country];
+  const row = entry && Object.hasOwn(entry.banks, identifier) ? entry.banks[identifier] : undefined;
+  if (!row) return null;
+  const [name, bic, curated] = row as [string, string, number?];
+  return {
+    name,
+    bic,
+    countryCode: country,
+    bankIdentifier: identifier,
+    source: `${national.source.replace("/tree/", "/blob/")}/${entry.file}`,
+    verifiedAt: national.releasedAt,
+    sourceKind: curated || entry.kind === "curated" ? "curated" : "register",
+  };
+}
 const italianByCode = new Map(
   italian.records.map((r) => [r.bankIdentifier, r]),
 );
@@ -64,6 +83,13 @@ export function directoryLookup(
         verifiedAt: r.verifiedAt,
       };
       if (!bank.bic && participant) bank.bic = participant.bic;
+      if (!bank.bic) {
+        const registered = nationalBank("IT", identifier);
+        if (registered?.bic) {
+          bank.bic = registered.bic;
+          bank.bicSource = registered.source;
+        }
+      }
       if (!bank.office && raw.legalAddress)
         bank.office = {
           address: raw.legalAddress,
@@ -99,6 +125,7 @@ export function directoryLookup(
       }
     }
   }
+  bank ??= nationalBank(country, identifier);
   if (!bank) return null;
   const office=offices.find(o=>o.countryCode===country&&o.bankIdentifier===identifier);
   if(office){bank.headquartersAddress=office.address;bank.headquartersSource=office.source;bank.headquartersDate=office.verifiedAt;}
@@ -126,38 +153,69 @@ function participantBank(r: (typeof epc.records)[number]): DirectoryBank {
     verifiedAt: epc.retrievedAt,
   });
 }
+/** Lower-cased once at start-up; Italy is served by the detailed Banca d'Italia directory. */
+const nationalIndex = Object.entries(nationalCountries)
+  .filter(([country]) => country !== "IT")
+  .flatMap(([country, entry]) =>
+    Object.entries(entry.banks).map(([code, row]) => {
+      const name = String(row[0]);
+      const bic = String(row[1]);
+      return { country, code, name, bic, haystack: (name + " " + bic + " " + code).toLowerCase() };
+    }),
+  );
+/** 0: exact code/BIC, 1: exact name, 2: name or BIC prefix, 3: word prefix, 4: substring. */
+function matchRank(q: string, name: string, bic: string, code: string): number {
+  const n = name.toLowerCase();
+  const b = bic.toLowerCase();
+  if (code.toLowerCase() === q || b === q || b === q + "xxx") return 0;
+  if (nameKey(name) === nameKey(q)) return 1;
+  if (n.startsWith(q) || b.startsWith(q)) return 2;
+  if (n.includes(" " + q)) return 3;
+  return 4;
+}
 export function directorySearch(query: string): DirectoryBank[] {
   const q = query.trim().toLowerCase();
   if (q.length < 2 || q.length > 100) return [];
+  const limit = 20;
+  // Candidates are gathered per source in priority order, then ranked by match quality.
+  const candidates: { rank: number; order: number; load: () => DirectoryBank | null }[] = [];
+  const consider = (name: string, bic: string, code: string, load: () => DirectoryBank | null) => {
+    const haystack = (name + " " + bic + " " + code).toLowerCase();
+    if (haystack.includes(q))
+      candidates.push({ rank: matchRank(q, name, bic, code), order: candidates.length, load });
+  };
+  for (const r of searchBanks(query))
+    consider(r.name, r.bic, r.bankIdentifier, () => directoryLookup(r.countryCode, r.bankIdentifier) || enrich(r));
+  for (const r of italian.records)
+    consider(r.name, "", r.bankIdentifier, () => directoryLookup("IT", r.bankIdentifier));
+  for (const r of nationalIndex)
+    if (r.haystack.includes(q))
+      consider(r.name, r.bic, r.code, () => directoryLookup(r.country, r.code));
+  for (const r of epc.records) consider(r.name, r.bic, "", () => participantBank(r));
+  // Equal matches keep source priority: reviewed records, Italian register, national registers, EPC.
+  candidates.sort((a, b) => a.rank - b.rank || a.order - b.order);
   const out: DirectoryBank[] = [];
   const seen = new Set<string>();
-  const add = (r: DirectoryBank) => {
+  for (const candidate of candidates) {
+    if (out.length >= limit) break;
+    const r = candidate.load();
+    if (!r) continue;
     const key = r.bic ? bicKey(r.bic) : r.countryCode + r.bankIdentifier;
     if (!seen.has(key)) {
       seen.add(key);
       out.push(r);
     }
-  };
-  for (const r of searchBanks(query)) add(directoryLookup(r.countryCode,r.bankIdentifier)||enrich(r));
-  for (const r of italian.records) {
-    if ((r.name + " " + r.bankIdentifier).toLowerCase().includes(q)) {
-      const bank = directoryLookup("IT", r.bankIdentifier);
-      if (bank) add(bank);
-    }
-    if (out.length >= 20) break;
   }
-  for (const r of epc.records) {
-    if (out.length >= 20) break;
-    if ((r.name + " " + r.bic).toLowerCase().includes(q))
-      add(participantBank(r));
-  }
-  return out.slice(0, 20);
+  return out;
 }
 export const directoryStats = {
   italianBanks: italian.records.length,
   branches: branches.records.length,
   bics: epc.records.length,
   certifiedContacts: contacts.length,
+  nationalCountries: Object.keys(nationalCountries).length,
+  nationalBanks: Object.values(nationalCountries).reduce((n, c) => n + Object.keys(c.banks).length, 0),
+  nationalDate: national.releasedAt,
   italianDate: italian.retrievedAt,
   epcDate: epc.retrievedAt,
 };

@@ -4,8 +4,15 @@ import { POST as validate } from "@/app/api/v1/iban/validate/route";
 import { GET as health } from "@/app/api/health/route";
 import { GET as banks } from "@/app/api/banks/route";
 import { GET as rates } from "@/app/api/rates/route";
+import { getReferenceRates, resetRatesCache } from "@/lib/rates-cache";
 vi.mock("server-only", () => ({}));
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  resetRatesCache();
+});
+const ecbXml = `<Cube time='2026-09-25'>${["USD", "GBP", "JPY", "CHF", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF"]
+  .map((c) => `<Cube currency='${c}' rate='1.5'/>`)
+  .join("")}</Cube>`;
 describe("simplified public services", () => {
   it("retires AI and business API without any provider request", async () => {
     const f = vi.fn();
@@ -61,5 +68,23 @@ describe("simplified public services", () => {
     const r = await rates();
     expect(r.status).toBe(503);
     expect(await r.text()).not.toContain("private stack");
+  });
+  it("downloads ECB rates once per hour and shares concurrent requests", async () => {
+    const f = vi.fn().mockImplementation(async () => new Response(ecbXml));
+    vi.stubGlobal("fetch", f);
+    const [a, b] = await Promise.all([rates(), rates()]);
+    expect(a.status).toBe(200);
+    expect((await b.json()).date).toBe("2026-09-25");
+    await rates();
+    expect(f).toHaveBeenCalledTimes(1);
+  });
+  it("reuses a recent verified publication while the ECB is unreachable", async () => {
+    const t = Date.UTC(2026, 8, 25, 12);
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(ecbXml)));
+    await getReferenceRates(t);
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(Error("down")));
+    const later = await getReferenceRates(t + 2 * 60 * 60 * 1000);
+    expect(later).toMatchObject({ stale: true, data: { date: "2026-09-25" } });
+    await expect(getReferenceRates(t + 5 * 24 * 60 * 60 * 1000)).rejects.toThrow();
   });
 });

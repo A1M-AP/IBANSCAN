@@ -1,51 +1,51 @@
 # Deployment and operations
 
-IBANScan is a Next.js application with server-rendered, language-aware pages and a local browser IBAN engine. No database, user account, payment provider or AI key is needed for validation, analysis, formatting, generation or CSV tools. AI and the authenticated API are real server integrations that remain explicitly unavailable until configured. There are no simulated AI responses or public admin endpoints.
+IBANScan is a Next.js application with statically generated pages in five languages and a local browser IBAN engine. No database, user account, payment provider, AI key or secret is needed. The server only answers bank-code lookups from bundled registers (`/api/banks`) and relays ECB reference rates (`/api/rates`).
 
 ## Run and release
 
-Use Node.js 22 LTS or newer with npm. Install dependencies with `npm ci`, copy `.env.example` to `.env.local`, then run `npm run dev`. On a fresh checkout run `npx next typegen` before `npm run check`; this generates the Next.js route types used by TypeScript. Run `npm run check` and `npm run test:e2e` before releasing. Use `npm run build` followed by `npm start` for a production Node deployment, or a provider with full Next.js App Router support. The build copies public/static assets alongside the generated standalone server, and the start script launches that server. Static-only hosting cannot run the AI and API endpoints.
+Use Node.js 22 LTS or newer with npm. Install dependencies with `npm ci`, copy `.env.example` to `.env.local`, then run `npm run dev`. On a fresh checkout run `npx next typegen` before `npm run check`; this generates the Next.js route types used by TypeScript. Run `npm run check` and `npm run test:e2e` before releasing. Use `npm run build` followed by `npm start` for a production Node deployment. For Cloudflare Workers see [CLOUDFLARE.md](CLOUDFLARE.md).
 
-The supplied Dockerfile builds a separate standalone runtime image and runs as the non-root `node` user. Build with `docker build --build-arg NEXT_PUBLIC_SITE_URL=https://ibanscan.com --tag ibanscan:local .`. The public site URL and optional `NEXT_PUBLIC_CONTACT_EMAIL` are build arguments because static pages and browser bundles embed these values. Supply private AI, API and rate-limit configuration as runtime environment variables or secret-manager values; never use build arguments for secrets. Local environment files are excluded from the Docker build context. When deploying the standalone output directly, supply runtime secrets explicitly rather than relying on a source-tree `.env.local` being available.
+The supplied Dockerfile builds a standalone runtime image that runs as the non-root `node` user. Public values are build arguments because pages are prerendered and embed them:
 
-Set `APP_URL` and `NEXT_PUBLIC_SITE_URL` to `https://ibanscan.com` (or the actual deployed hostname). Terminate HTTPS at the trusted ingress and preserve the intended host. Configure redirects for your chosen canonical hostname. Do not cache `/api/*` at the CDN. Do not enable logging of request bodies, Authorization headers, query strings containing credentials, or response bodies. Ingress logs may contain IP addresses: configure short retention and appropriate access controls outside the application.
-
-## Request protection
-
-Set `RATE_LIMIT_HASH_SECRET` to at least 32 cryptographically random characters. Production AI/API requests fail closed without it. IP addresses are HMAC hashed before becoming rate-limit keys. The application does not collect full IBANs in logs, history or analytics.
-
-For replicated or serverless deployments set both `RATE_LIMIT_REDIS_REST_URL` and `RATE_LIMIT_REDIS_REST_TOKEN` to a Redis REST service supporting `EVAL`. The atomic Redis script increments a counter and sets its expiry together. Distributed service failure returns HTTP 503 and never silently falls back to a local counter. A one-process, persistent Node deployment may explicitly set `RATE_LIMIT_ALLOW_SINGLE_INSTANCE=true`; it loses counters on restart and must not be used with serverless, cluster workers or replicas.
-
-Set `TRUSTED_IP_HEADER` only when your ingress overwrites that header with a single validated client IP and direct public access to the origin is prevented. A bare `x-real-ip` style value is supported; an untrusted or comma-separated forwarding chain is not. When no trusted IP is available, anonymous visitors share a conservative rate-limit bucket. Add provider-level connection limits, body/time limits and bot controls for internet exposure. API quotas are counted by provisioned customer ID after authentication. Invalid authentication is separately limited. Free AI limits are 3 requests/minute and 10/24 hours; the cross-user budget defaults to 200/24 hours. These are rolling fixed windows beginning with the first request, not calendar dates.
-
-## Genuine AI setup and grounding
-
-For Google Gemini set `AI_PROVIDER=google`, `GOOGLE_AI_API_KEY` and `GOOGLE_AI_MODEL`. See [Google AI and language setup](google-ai-and-languages.md). For the alternative provider set `AI_PROVIDER=openai-compatible`, `AI_API_KEY`, `AI_MODEL` and (if different) `AI_BASE_URL`. The provider must support the OpenAI-compatible `/chat/completions` endpoint, `max_completion_tokens`, `store:false`, and strict JSON-schema structured outputs. Select a currently supported model from your provider's catalog; the application does not assume a particular model is available. Provider reference: [OpenAI structured outputs](https://developers.openai.com/api/docs/guides/structured-outputs).
-
-IBANScan AI calls a language model to interpret the visitor's natural-language question and select/order relevant verified facts. The model receives only computed validation messages, country metadata, verified bank records and a redacted question. It does not receive the complete IBAN, BBAN, account identifier or input numeric strings. The user should still avoid adding personal information in free-form questions. Selected evidence IDs are validated on the server, and the displayed explanation is composed exclusively from application facts. This deliberate constrained design prevents model-authored banks, BICs, balances or ownership claims. Unknown IDs, additional response fields, refusals, truncated outputs and provider failures are rejected. There is no fabricated fallback explanation presented as AI.
-
-The AI endpoint requires a same-origin browser request, validates JSON and body sizes, and applies individual plus global request limits before contacting the provider. `AI_GLOBAL_DAILY_LIMIT` can reduce the shared budget; configure a provider spending cap as well. Treat provider requests as data processing and publish the actual provider/retention details in the Privacy Policy before launch. `store:false` is sent to the compatible provider only and does not independently guarantee zero provider-side retention. Google retention is governed by the configured Google service and account terms. AI credentials and model configuration remain server-side. Production AI endpoints require HTTPS for their upstream provider; development permits loopback HTTP only.
-
-## Provision and rotate an API key
-
-The initial API is operator-provisioned. Generate at least 32 random bytes, base64url encode them, and calculate the SHA-256 hex digest of that key. Keep the cleartext key only in your secret manager and the customer's client. Set `IBANSCAN_API_KEY_HASHES` to a JSON array such as:
-
-```json
-[{"id":"your-customer-id","hash":"YOUR_64_CHARACTER_SHA256_HEX_DIGEST","plan":"business"}]
+```sh
+docker build \
+  --build-arg NEXT_PUBLIC_SITE_URL=https://your-domain.example \
+  --build-arg NEXT_PUBLIC_CONTACT_EMAIL=info@your-domain.example \
+  --build-arg NEXT_PUBLIC_OPERATOR_NAME="Your Company S.r.l." \
+  --build-arg NEXT_PUBLIC_OPERATOR_ADDRESS="Via Example 1, 00100 Roma, Italia" \
+  --build-arg NEXT_PUBLIC_OPERATOR_VAT_ID=IT01234567890 \
+  --tag ibanscan:local .
 ```
 
-Never use the placeholder as a key. The supported plans are `free`, `pro` and `business`; their per-minute limits are defined centrally in `lib/plans.ts`. No plan can be selected by a public request. Rotate by adding the new digest, distributing its key securely, then removing the old digest; use a distinct ID when overlapping keys need separate quotas. Removing a digest revokes the key after the new deployment/configuration becomes active. Keys are high-entropy bearer credentials; password-like user-chosen API keys are unsuitable for unsalted SHA-256 storage.
+## Public configuration
 
-Clients send `Authorization: Bearer <key>`. The application rejects query-string keys. `POST /api/v1/iban/validate` and `/api/v1/iban/analyze` accept JSON `{ "iban": "..." }`. Invalid IBANs return HTTP 200 with `valid:false` and exact validation errors; malformed transport requests return 400/413/415, missing or invalid keys 401, quota exhaustion 429 with `Retry-After`, and unconfigured services 503. `GET /api/v1/bank/search?q=abna&country=NL` searches only the verified local records. A missing bank match returns an empty array and "Bank information unavailable". All API responses use `Cache-Control:no-store`. HTTPS is required in production. The browser playground holds a visitor-supplied key in component memory only; it must not persist it in local storage or put it in URLs.
+| Variable | Purpose |
+| --- | --- |
+| `NEXT_PUBLIC_SITE_URL` | Canonical HTTPS origin used for canonical links, hreflang, sitemap and Open Graph. Defaults to `https://ibanscan.com`; **set it to your real domain**. |
+| `NEXT_PUBLIC_CONTACT_EMAIL` | Public contact address on Contact and legal pages. |
+| `NEXT_PUBLIC_OPERATOR_NAME`, `NEXT_PUBLIC_OPERATOR_ADDRESS` | Legal name and address of the site operator. |
+| `NEXT_PUBLIC_OPERATOR_VAT_ID`, `NEXT_PUBLIC_OPERATOR_PEC`, `NEXT_PUBLIC_HOSTING_PROVIDER` | Optional VAT number (Partita IVA, shown in the footer), certified email and hosting provider name. |
+| `NEXT_PUBLIC_ADSENSE_*`, `NEXT_PUBLIC_GOOGLE_CMP_URL` | Optional advertising, see [ADVERTISING.md](ADVERTISING.md). |
+
+Legal pages stay marked as drafts until name, address and contact email are all set. Once they are, the draft notices disappear and the pages show the data controller, the legal basis for hosting logs, data-subject rights and the operator identity. These texts describe the default application; have them reviewed for your jurisdiction and update them if you add providers (analytics, advertising, other hosting).
+
+## Languages and URLs
+
+English is served at unprefixed URLs (`/tools`); Italian, German, French and Spanish at `/it/tools`, `/de/tools` and so on. Every page carries a canonical link and `hreflang` alternates, and the sitemap lists every language edition. `/en/...` permanently redirects to the unprefixed URL. Choosing a language stores the `ibanscan-locale` cookie, so unprefixed URLs then redirect (307) to the chosen language. The routing is implemented with `next.config.ts` redirects and rewrites into `app/[lang]`, not with a proxy/middleware, so it works on Node and on Cloudflare Workers alike.
+
+## Caching and request protection
+
+Pages are prerendered per language and can be cached by a CDN. The ECB rates are downloaded at most once per hour per server instance; concurrent requests share one download, and a verified publication up to four days old is reused while the ECB is unreachable (its own reference date is always displayed). Bank lookups are served from memory.
+
+The public endpoints do no expensive work, but add provider-level protection for internet exposure: on Cloudflare, a WAF rate-limiting rule for `/api/*` (for example 60 requests per minute per IP) plus bot protection; behind another ingress, equivalent connection and request limits. Do not log request query strings for `/api/banks` longer than necessary: they contain bank codes, never full IBANs.
+
+`lib/server/rate-limit.ts` and `lib/server/http.ts` are tested building blocks kept from the retired Business API; the current public endpoints do not use them.
 
 ## Readiness and release checks
 
-`GET /api/health` reports basic configuration states without secrets or connectivity probes. `status:ok` indicates the core app is running, not that AI credentials or a Redis service have been verified. `GET /api/ai` indicates AI provider configuration only. After configuring integrations, run an authenticated API request and an actual AI question on the deployed origin; confirm expected 401, 403, 429 and safe failure behavior. Tests mock provider calls so the repository test suite does not require or consume credentials. An actual provider roundtrip cannot be certified without deployment credentials.
+`GET /api/health` reports that validation, the bank directory and on-demand rates are available; it does not probe the ECB. After deploying, check the homepage in every language, a German or Italian IBAN with a bank match, the currency converter, `/sitemap.xml`, and that canonical/hreflang links use your real domain. Do not claim to verify account ownership, account activity, funds, or universal bank-directory coverage.
 
-Run mobile/desktop browser checks, verify canonical/sitemap URLs, review the checked-in bank/SEPA source dates, configure an operator contact, and replace legal placeholders with the operator's actual details, processors, retention policy and terms before public operation. Do not claim to verify account ownership, account activity, funds, or universal bank-directory coverage.
+## Retired features
 
-## Persistence, subscriptions and admin
-
-`db/schema.sql` is a reviewed foundation, not an automatically executed migration. It contains users, organizations, membership roles, subscription references, hashed API keys, aggregate daily usage, banking data provenance, audited administration and non-secret content/configuration. Core utilities deliberately have no database dependency. Row-level security is enabled without permissive policies, so a future non-owner application role fails closed until its tenant-specific access policy is designed. Never connect this schema using a database-owner role in the web application.
-
-`lib/server/administration.ts` defines identity, subscription and aggregate-usage adapter contracts. A future dashboard must integrate verified sessions, tenant authorization, MFA for administrators, audit records and explicit retention policies before adding routes. Stripe can implement the subscription adapter after signature-validated, idempotent webhook processing is added. No payment is collected in this release. History should be opt-in and minimized; there is intentionally no full-IBAN history table. Advertising and analytics should remain disabled until the actual provider, disclosures and any necessary consent controls are configured. Keep integration secrets in the deployment's secret manager, never `NEXT_PUBLIC_*` variables.
+The AI assistant and the authenticated Business API have been retired. `/ai`, `/api`, `/api/docs` and `/api/playground` permanently redirect to Tools; `/api/ai` and `/api/v1/*` return HTTP 410 and never contact a provider. `db/schema.sql`, `lib/plans.ts` and the remaining `lib/server/*` modules (authentication and administration contracts) are not used by the running application.

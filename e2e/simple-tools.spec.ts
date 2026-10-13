@@ -91,7 +91,7 @@ test("new design stays readable and has no ads before configuration or consent",
         .locator(".hero-description")
         .evaluate((el) => parseFloat(getComputedStyle(el).fontSize)),
     ).toBeGreaterThanOrEqual(19);
-    await expect(page.locator(".ad-slot")).toBeVisible();
+    await expect(page.locator(".ad-slot")).toHaveCount(0);
     await page.screenshot({
       path: info.outputPath("home-" + width + ".png"),
       fullPage: true,

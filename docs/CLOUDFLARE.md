@@ -7,7 +7,9 @@ Repository A1M-AP/IBANSCAN, ramo main, directory radice /. Node 22 o successivo.
 - Build command: lasciare vuoto.
 - Deploy command: npm run cf:deploy
 
-Il comando esegue cf:build prima del deploy. Non usare direttamente wrangler deploy o opennextjs-cloudflare deploy da un checkout privo di .open-next: causerebbe l'errore «Could not find compiled Open Next config».
+Il comando esegue cf:build prima del deploy. Per i rami diversi da main (anteprime delle pull request) Cloudflare usa il comando predefinito `npx wrangler versions upload`: il campo "build" di wrangler.jsonc esegue automaticamente cf:build quando .open-next/worker.js manca, quindi non serve cambiare le impostazioni. Un artefatto già presente viene riutilizzato.
+
+Dimensione del Worker: circa 2,9 MB compressi. Il piano gratuito di Workers accetta fino a 3 MB, quello a pagamento 10 MB.
 
 workers_dev e preview_urls sono esplicitamente abilitati. Puoi collegare un dominio personalizzato nelle impostazioni del Worker.
 
